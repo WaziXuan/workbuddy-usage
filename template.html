@@ -1,0 +1,600 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>usage</title>
+<style>
+:root{
+  --bg:#0a0b0d; --fg:#d6d9de; --dim:#6b7280; --dim2:#4b5058;
+  --line:#1a1d22; --line2:#242830; --accent:#4d8df6;
+  --mono:ui-monospace,"SF Mono","Cascadia Mono","JetBrains Mono",Consolas,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font:13px/1.55 -apple-system,"Segoe UI",
+ "PingFang SC","Microsoft YaHei",sans-serif;padding:28px 24px 56px;
+ -webkit-font-smoothing:antialiased}
+.wrap{max-width:1000px;margin:0 auto}
+
+header{display:flex;align-items:baseline;justify-content:space-between;
+ gap:16px;margin-bottom:18px}
+h1{font-family:var(--mono);font-size:15px;font-weight:600;letter-spacing:.4px}
+h1::before{content:"› ";color:var(--accent)}
+.meta{font-family:var(--mono);font-size:11px;color:var(--dim2)}
+
+.tools{display:flex;gap:26px;align-items:center;flex-wrap:wrap;
+ padding-bottom:14px;border-bottom:1px solid var(--line)}
+.seg{display:flex;gap:0}
+.seg button{background:none;border:0;color:var(--dim);font-family:var(--mono);
+ font-size:11.5px;padding:3px 0;margin-right:14px;cursor:pointer;position:relative}
+.seg button:hover{color:var(--fg)}
+.seg button.on{color:var(--fg)}
+.seg button.on::after{content:"";position:absolute;left:0;right:0;bottom:-4px;
+ height:1px;background:var(--accent)}
+.tools .lbl{font-family:var(--mono);font-size:11px;color:var(--dim2);margin-right:-14px}
+
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);
+ border-bottom:1px solid var(--line)}
+.metric{padding:16px 0 15px 16px;border-left:1px solid var(--line)}
+.metric:first-child{border-left:0;padding-left:0}
+.metric .k{display:block;font-family:var(--mono);font-size:10.5px;
+ color:var(--dim2);letter-spacing:.3px;margin-bottom:5px}
+.metric .v{font-family:var(--mono);font-size:22px;font-weight:500;letter-spacing:-.3px}
+.metric .s{display:block;font-size:10.5px;color:var(--dim2);margin-top:3px;
+ white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.metric .d{font-family:var(--mono);font-size:10.5px}
+.up{color:#4f9e7a}.down{color:#b8666a}
+
+section{margin-top:26px}
+.sh{display:flex;align-items:baseline;gap:10px;margin-bottom:10px;
+ font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:.4px}
+.sh i{font-style:normal;color:var(--dim2);font-size:10.5px}
+.sh .right{margin-left:auto}
+.frame{border:1px solid var(--line);border-radius:3px;padding:14px 12px 8px}
+
+.chart{width:100%;height:auto;display:block}
+.grid{stroke:var(--line2);stroke-width:1;stroke-dasharray:2 4}
+.axis{fill:var(--dim2);font-size:9.5px;font-family:var(--mono);user-select:none}
+.seg-rect{cursor:pointer;transition:opacity .1s}
+.seg-rect:hover{opacity:.78}
+.col-hit{fill:transparent;cursor:crosshair}
+.bar2{fill:#2b5f9e;transition:fill .1s}
+.bar2:hover{fill:var(--accent)}
+
+#tip{position:fixed;pointer-events:none;z-index:99;opacity:0;transition:opacity .1s;
+ background:#111418;border:1px solid var(--line2);border-radius:3px;
+ padding:8px 10px;font-size:11.5px;line-height:1.7;min-width:120px;
+ font-family:var(--mono)}
+#tip.on{opacity:1}
+#tip .d{color:var(--fg);margin-bottom:3px}
+#tip .r{display:flex;justify-content:space-between;gap:16px;color:var(--dim)}
+#tip .r b{color:var(--fg);font-weight:500}
+#tip .sw{display:inline-block;width:7px;height:7px;margin-right:6px;vertical-align:1px}
+
+.legend{display:flex;flex-wrap:wrap;gap:4px 18px;padding:12px 2px 4px;
+ border-top:1px solid var(--line);margin-top:12px}
+.lg{display:inline-flex;align-items:center;gap:6px;background:none;border:0;
+ color:var(--dim);font-family:var(--mono);font-size:10.5px;cursor:pointer;padding:0}
+.lg:hover{color:var(--fg)}
+.lg.off{opacity:.3}
+.lg .sw{width:7px;height:7px;flex:none}
+.lg .pc{color:var(--dim2)}
+
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;font-family:var(--mono);font-weight:400;color:var(--dim2);
+ font-size:10.5px;letter-spacing:.3px;padding:6px 8px;border-bottom:1px solid var(--line);
+ white-space:nowrap}
+th.s{cursor:pointer}
+th.s:hover{color:var(--fg)}
+th .ar{opacity:0;margin-left:3px;font-size:8px}
+th.srt .ar{opacity:1;color:var(--accent)}
+th.num,td.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
+td{padding:8px;border-bottom:1px solid var(--line);vertical-align:middle}
+tbody tr:last-child td{border-bottom:0}
+tr.row{cursor:pointer}
+tr.row:hover td{background:#0e1116}
+.ttl .t{color:#c9ccd2;max-width:320px;overflow:hidden;text-overflow:ellipsis;
+ white-space:nowrap}
+.ttl .sub{color:var(--dim2);font-size:10.5px;font-family:var(--mono)}
+.mut{color:var(--dim2)}
+.warn{color:#c08a3e}
+.cv{display:flex;align-items:flex-start;gap:8px}
+.chev{width:6px;height:6px;border-right:1px solid var(--dim2);border-bottom:1px solid var(--dim2);
+ transform:rotate(-45deg);transition:.15s;flex:none;margin-top:6px}
+tr.open .chev{transform:rotate(45deg);border-color:var(--accent)}
+tr.det td{background:#0c0e12;padding:0;border-bottom:1px solid var(--line)}
+.det-in{padding:9px 8px 12px 30px}
+.req{display:flex;justify-content:space-between;gap:16px;font-family:var(--mono);
+ font-size:11px;color:var(--dim);padding:2px 0}
+.req b{color:#b9bdc4;font-weight:400}
+.req i{color:var(--dim2);font-style:normal}
+.det-empty{color:var(--dim2);font-size:11px;padding:3px 0}
+.bar-cell{width:150px}
+.track{height:3px;background:var(--line2);overflow:hidden}
+.track i{display:block;height:100%;background:var(--accent);opacity:.75}
+
+.heat{display:flex;gap:36px;align-items:center;justify-content:center;
+ border:1px solid var(--line);border-radius:3px;padding:18px}
+.cal{display:block}
+.cell{fill:#12151a}
+.cell:hover{stroke:#5d7fae;stroke-width:1}
+.l1{fill:#16304b}.l2{fill:#1d4570}.l3{fill:#2a6396}.l4{fill:#4985c4}
+.lgnd{font-family:var(--mono);font-size:10.5px;color:var(--dim2);line-height:1.9;
+ text-align:right;white-space:nowrap}
+.lgnd b{color:var(--dim);font-weight:400}
+.sw2{display:inline-block;width:8px;height:8px;vertical-align:-1px;margin-left:3px}
+.sw2.l0{background:#12151a;box-shadow:inset 0 0 0 1px var(--line2)}
+.sw2.l1{background:#16304b}.sw2.l2{background:#1d4570}
+.sw2.l3{background:#2a6396}.sw2.l4{background:#4985c4}
+
+footer{margin-top:34px;padding-top:12px;border-top:1px solid var(--line);
+ font-family:var(--mono);font-size:10.5px;color:var(--dim2);line-height:1.9}
+@media(max-width:720px){.metrics{grid-template-columns:repeat(2,1fr)}
+ .metric:nth-child(3){border-left:0;padding-left:0}.heat{flex-direction:column;gap:14px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>usage</h1>
+    <div class="meta" id="gen">—</div>
+  </header>
+
+  <div class="tools">
+    <span class="lbl">range</span>
+    <div class="seg" id="range">
+      <button data-r="7" class="on">7d</button>
+      <button data-r="30">30d</button>
+      <button data-r="0">all</button>
+    </div>
+    <span class="lbl">group</span>
+    <div class="seg" id="group">
+      <button data-g="session" class="on">session</button>
+      <button data-g="model">model</button>
+    </div>
+    <span class="lbl">metric</span>
+    <div class="seg" id="metric">
+      <button data-m="credits" class="on">credits</button>
+      <button data-m="tokens">tokens</button>
+    </div>
+  </div>
+
+  <div class="metrics" id="stats"></div>
+
+  <section>
+    <div class="sh">daily <span id="stackUnit">credits</span> <i id="stackTag"></i></div>
+    <div class="frame">
+      <div id="stack"></div>
+      <div class="legend" id="legend"></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sh">hour of day <i>all time</i></div>
+    <div class="frame"><div id="hours"></div></div>
+  </section>
+
+  <section>
+    <div class="sh">sessions <i>click a row to expand · click header to sort</i></div>
+    <div class="frame" style="padding:4px 10px 2px">
+      <table>
+        <thead><tr>
+          <th class="s" data-k="title">session<span class="ar">▲</span></th>
+          <th class="s num" data-k="credit"><span id="colUnit">credits</span><span class="ar">▲</span></th>
+          <th class="s num" data-k="req">reqs<span class="ar">▲</span></th>
+          <th>share</th>
+          <th class="s num" data-k="pct">context<span class="ar">▲</span></th>
+        </tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="sh">activity <i>13 weeks</i>
+      <div class="right seg">
+        <button data-h="daily" class="on">daily</button>
+        <button data-h="cum">cumulative</button>
+      </div>
+    </div>
+    <div class="heat">
+      <div id="cal"></div>
+      <div class="lgnd">
+        <div><b id="activeDays">0</b> active days</div>
+        <div><span class="sw2 l0"></span><span class="sw2 l1"></span><span class="sw2 l2"></span><span class="sw2 l3"></span><span class="sw2 l4"></span></div>
+        <div>low → high</div>
+      </div>
+    </div>
+  </section>
+
+  <footer id="foot">—</footer>
+</div>
+<div id="tip"></div>
+
+<script>
+const DATA = __DATA__;
+
+const PALETTE = ["#4d8df6","#3f9c8f","#7b6fc0","#b08050","#a85e6d","#6f8250","#4f7fa8"];
+const OTHER = "#3a4048";
+const DAY = 864e5;
+
+const S = {range:7, group:"session", sortKey:"credit", sortDir:-1,
+           hidden:new Set(), open:new Set(), heat:"daily", allRows:false,
+           metric:"credits"};
+const applyMetric = () => RECS.forEach(r => { r.v = S.metric === "tokens" ? r.ttok : r.credit; });
+const unit = () => S.metric === "tokens" ? "tokens" : "credits";
+
+const RECS = DATA.records.map(r => ({rid:r[0], sid:r[1], credit:r[2], ts:r[3], tin:r[4]||0, tout:r[5]||0, tcache:r[6]||0, ttok:r[7]||0}));
+const SESS = DATA.sessions;
+const ymd = d => { const p = n => String(n).padStart(2,"0");
+  return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate()); };
+const dayKey = ts => { const d = new Date(ts); d.setHours(0,0,0,0); return ymd(d); };
+const md = k => k.slice(5);
+const fmtAxis = x => x >= 1e6 ? Math.round(x/1e6)+"M"
+  : x >= 1000 ? Math.round(x/1000)+"k" : Math.round(x);
+const fmt = x => !x ? "0" : x >= 1e6 ? (x/1e6).toFixed(2)+"M"
+  : x >= 1000 ? (x/1000).toFixed(1)+"k" : (x >= 10 ? Math.round(x) : x.toFixed(1));
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+const cutoff = () => S.range ? new Date().setHours(0,0,0,0) - (S.range-1)*DAY : 0;
+const inRange = () => { const c = cutoff(); return RECS.filter(r => r.ts >= c); };
+
+const groupKey = r => S.group === "model" ? (SESS[r.sid]?.m || "未知") : r.sid;
+const groupLabel = k => S.group === "model" ? k : (SESS[k]?.t || "(未命名)");
+
+const tipEl = document.getElementById("tip");
+function showTip(html, x, y){
+  tipEl.innerHTML = html; tipEl.classList.add("on");
+  const r = tipEl.getBoundingClientRect();
+  let left = x + 12, top = y - r.height - 10;
+  if (left + r.width > innerWidth - 10) left = x - r.width - 12;
+  if (top < 8) top = y + 16;
+  tipEl.style.left = left + "px"; tipEl.style.top = top + "px";
+}
+const hideTip = () => tipEl.classList.remove("on");
+
+function renderStats(){
+  const recs = inRange();
+  const total = recs.reduce((a,r) => a + r.v, 0);
+  const byDay = {};
+  recs.forEach(r => byDay[dayKey(r.ts)] = (byDay[dayKey(r.ts)]||0) + r.v);
+  const peak = Object.entries(byDay).sort((a,b) => b[1]-a[1])[0] || ["—", 0];
+
+  let delta = "";
+  if (S.range){
+    const c = cutoff(), before = RECS.filter(r => r.ts >= c - S.range*DAY && r.ts < c)
+                                 .reduce((a,r) => a + r.v, 0);
+    if (before > 0){
+      const p = (total - before) / before * 100;
+      delta = `<span class="d ${p >= 0 ? "up" : "down"}">${p >= 0 ? "+" : ""}${p.toFixed(0)}% vs prev</span>`;
+    }
+  }
+  const cells = [
+    ["total", fmt(total), delta || unit()],
+    ["requests", recs.length, "model calls"],
+    ["sessions", new Set(recs.map(r => r.sid)).size, "with usage"],
+    ["peak day", fmt(peak[1]), md(peak[0])]
+  ];
+  document.getElementById("stats").innerHTML = cells.map(([k,v,s]) =>
+    `<div class="metric"><span class="k">${k}</span><span class="v">${v}</span>` +
+    `<span class="s">${s}</span></div>`).join("");
+}
+
+function renderStack(){
+  const recs = inRange().filter(r => r.ts);
+  const n = S.range || 30;
+  const end = new Date(); end.setHours(0,0,0,0);
+  const all = [];
+  for (let i = n-1; i >= 0; i--) all.push(ymd(new Date(end.getTime() - i*DAY)));
+
+  const totals = {};
+  recs.forEach(r => { const k = groupKey(r); totals[k] = (totals[k]||0) + r.v; });
+  const keys = Object.keys(totals).sort((a,b) => totals[b]-totals[a]);
+  const visible = keys.filter(k => !S.hidden.has(k));
+  const main = visible.slice(0, 7);
+  const overflow = new Set(visible.slice(7));
+  const colorOf = k => {
+    const i = main.indexOf(k);
+    return (overflow.has(k) || i < 0) ? OTHER : PALETTE[i % PALETTE.length];
+  };
+
+  const cell = {}, other = {};
+  recs.forEach(r => {
+    const d = dayKey(r.ts), k = groupKey(r);
+    if (S.hidden.has(k)) return;
+    if (overflow.has(k)) { other[d] = (other[d]||0) + r.v; return; }
+    (cell[d] ||= {})[k] = (cell[d][k]||0) + r.v;
+  });
+  const dayTotal = d => (Object.values(cell[d]||{}).reduce((a,b)=>a+b,0) + (other[d]||0));
+  const peak = Math.max(1, ...all.map(dayTotal));
+
+  const W = 1000, H = 220, PL = 40, PB = 22, PT = 10;
+  const plotH = H - PB - PT, slot = (W-PL)/all.length;
+  const bw = Math.max(2, Math.min(26, slot*0.5));
+  const step = Math.ceil(all.length / (all.length <= 14 ? all.length : 8));
+
+  let svg = `<svg viewBox="0 0 ${W} ${H}" class="chart" id="stackSvg">`;
+  for (let i = 0; i < 3; i++){
+    const y = PT + plotH*i/2;
+    svg += `<line x1="${PL}" y1="${y}" x2="${W-2}" y2="${y}" class="grid"/>`
+        +  `<text x="${PL-7}" y="${y+3.5}" class="axis" text-anchor="end">${fmtAxis(peak*(1-i/2))}</text>`;
+  }
+  all.forEach((d, i) => {
+    const x = PL + slot*i + (slot-bw)/2;
+    let y = PT + plotH;
+    main.forEach(k => {
+      const v = (cell[d]||{})[k] || 0; if (!v) return;
+      const h = plotH*v/peak; y -= h;
+      svg += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" `
+           + `height="${h.toFixed(1)}" fill="${colorOf(k)}" class="seg-rect"/>`;
+    });
+    if (other[d]){
+      const h = plotH*other[d]/peak; y -= h;
+      svg += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" `
+           + `height="${h.toFixed(1)}" fill="${OTHER}" class="seg-rect"/>`;
+    }
+    if (i % step === 0 || i === all.length-1)
+      svg += `<text x="${(x+bw/2).toFixed(1)}" y="${H-7}" class="axis" text-anchor="middle">${md(d)}</text>`;
+  });
+  all.forEach((d, i) => {
+    svg += `<rect class="col-hit" data-day="${d}" x="${(PL+slot*i).toFixed(1)}" y="${PT}" `
+         + `width="${slot.toFixed(1)}" height="${plotH}"/>`;
+  });
+  svg += "</svg>";
+  document.getElementById("stack").innerHTML = svg;
+
+  const total = Object.values(totals).reduce((a,b)=>a+b,0) || 1;
+  let lg = main.map(k =>
+    `<button class="lg ${S.hidden.has(k)?"off":""}" data-k="${esc(k)}">`
+    + `<span class="sw" style="background:${colorOf(k)}"></span>${esc(groupLabel(k).slice(0,14))}`
+    + `<span class="pc">${(totals[k]/total*100).toFixed(1)}%</span></button>`).join("");
+  if (overflow.size){
+    const ov = [...overflow].reduce((a,k) => a + totals[k], 0);
+    lg += `<span class="lg" style="cursor:default"><span class="sw" style="background:${OTHER}"></span>`
+        + `其他 ${overflow.size}<span class="pc">${(ov/total*100).toFixed(1)}%</span></span>`;
+  }
+  document.getElementById("legend").innerHTML = lg;
+  document.getElementById("stackTag").textContent =
+    `${all[0]} → ${all[all.length-1]} · ${S.group}`;
+
+  document.getElementById("stackSvg").querySelectorAll(".col-hit").forEach(hit => {
+    hit.addEventListener("mousemove", e => {
+      const d = hit.dataset.day, stack = cell[d] || {};
+      const rows = Object.entries(stack).sort((a,b) => b[1]-a[1]).slice(0,5);
+      if (other[d]) rows.push(["__other", other[d]]);
+      let html = `<div class="d">${d} · ${fmt(dayTotal(d))}</div>`;
+      if (!rows.length) html += `<div class="r"><span>no usage</span></div>`;
+      rows.forEach(([k,v]) => {
+        html += `<div class="r"><span><span class="sw" style="background:`
+          + `${k==="__other"?OTHER:colorOf(k)}"></span>`
+          + `${esc(k==="__other" ? "其他" : groupLabel(k).slice(0,18))}</span><b>${fmt(v)}</b></div>`;
+      });
+      showTip(html, e.clientX, e.clientY);
+    });
+    hit.addEventListener("mouseleave", hideTip);
+  });
+}
+
+function renderHours(){
+  const recs = inRange(), h = new Array(24).fill(0);
+  recs.forEach(r => h[new Date(r.ts).getHours()] += r.v);
+  const peak = Math.max(1, ...h);
+  const W = 1000, H = 120, PL = 40, PB = 20, PT = 6;
+  const plotH = H-PB-PT, slot = (W-PL)/24, bw = slot*0.45;
+  let svg = `<svg viewBox="0 0 ${W} ${H}" class="chart">`;
+  svg += `<line x1="${PL}" y1="${PT+plotH}" x2="${W-2}" y2="${PT+plotH}" class="grid"/>`;
+  h.forEach((v, i) => {
+    const x = PL + slot*i + (slot-bw)/2, bh = plotH*v/peak;
+    svg += `<rect x="${x.toFixed(1)}" y="${(PT+plotH-bh).toFixed(1)}" width="${bw.toFixed(1)}" `
+        +  `height="${Math.max(bh,0.5).toFixed(1)}" class="bar2" data-h="${i}" data-v="${v.toFixed(1)}"/>`;
+    if (i % 3 === 0)
+      svg += `<text x="${(x+bw/2).toFixed(1)}" y="${H-5}" class="axis" text-anchor="middle">`
+          +  `${String(i).padStart(2,"0")}</text>`;
+  });
+  svg += "</svg>";
+  const el = document.getElementById("hours");
+  el.innerHTML = svg;
+  el.querySelectorAll("[data-h]").forEach(b => {
+    b.addEventListener("mousemove", e => showTip(
+      `<div class="d">${String(b.dataset.h).padStart(2,"0")}:00</div>`
+      + `<div class="r"><span>${unit()}</span><b>${fmt(+b.dataset.v)}</b></div>`,
+      e.clientX, e.clientY));
+    b.addEventListener("mouseleave", hideTip);
+  });
+}
+
+function renderTable(){
+  const recs = inRange(), agg = {};
+  recs.forEach(r => {
+    const a = agg[r.sid] ||= {credit:0, tok:0, req:0, list:[]};
+    a.credit += r.v; a.tok += r.ttok; a.req++; a.list.push(r);
+  });
+  const rows = Object.entries(agg).map(([sid,a]) => {
+    const m = SESS[sid] || {}, size = m.s || 0;
+    return {sid, title:m.t || "(未命名)", model:m.m || "", cwd:m.c || "",
+            credit:a.credit, tok:a.tok, req:a.req, list:a.list,
+            pct: size ? (m.u||0)/size*100 : 0};
+  });
+  const k = S.sortKey, dir = S.sortDir;
+  rows.sort((a,b) => k === "title"
+    ? a.title.localeCompare(b.title, "zh")*dir
+    : (a[k]-b[k])*dir);
+
+  const peak = Math.max(1, ...rows.map(r => r.credit));
+  const total = rows.reduce((a,r) => a + r.credit, 0) || 1;
+  const shown = S.allRows ? rows : rows.slice(0, 15);
+
+  document.querySelectorAll("thead th.s").forEach(th => {
+    th.classList.toggle("srt", th.dataset.k === k);
+    const ar = th.querySelector(".ar");
+    if (ar) ar.textContent = th.dataset.k === k ? (dir < 0 ? "▼" : "▲") : "▲";
+  });
+
+  let html = shown.map(r => {
+    const w = r.credit/peak*100, open = S.open.has(r.sid);
+    let s = `<tr class="row ${open?"open":""}" data-sid="${r.sid}">`
+      + `<td class="ttl"><div class="cv"><span class="chev"></span><div>`
+      + `<div class="t">${esc(r.title)}</div>`
+      + `<div class="sub">${esc(r.model || r.cwd || "—")}</div></div></div></td>`
+      + `<td class="num">${fmt(r.credit)}</td>`
+      + `<td class="num mut">${r.req}</td>`
+      + `<td class="bar-cell"><div class="track"><i style="width:${w.toFixed(1)}%"></i></div>`
+      + `<span class="mut n" style="font-size:10px">${(r.credit/total*100).toFixed(1)}%</span></td>`
+      + `<td class="num ${r.pct >= 80 ? "warn" : ""}">${r.pct.toFixed(0)}%</td></tr>`;
+    if (open){
+      const list = [...r.list].sort((a,b) => a.ts-b.ts);
+      s += `<tr class="det"><td colspan="5"><div class="det-in">`
+        + `<div class="mut" style="font-size:10.5px;margin-bottom:5px">${list.length} reqs · `
+        + `${r.credit.toFixed(2)} credits · ${fmt(r.tok)} tok${r.cwd ? " · " + esc(r.cwd) : ""}</div>`
+        + (list.length ? list.map(x => `<div class="req">`
+            + `<span>${new Date(x.ts).toLocaleString("zh-CN",{hour12:false})} `
+            + `<i>${x.rid.slice(0,8)}</i></span><b>${x.credit.toFixed(2)}`
+            + `<span class="mut" style="font-size:9.5px">${x.ttok ? " · " + fmt(x.ttok) + " tok" : ""}</span></b></div>`).join("")
+          : `<div class="det-empty">没有请求级记录</div>`)
+        + `</div></td></tr>`;
+    }
+    return s;
+  }).join("");
+
+  if (rows.length > shown.length)
+    html += `<tr><td colspan="5" style="padding:9px 8px"><button class="lg" id="moreRows" `
+      + `style="color:var(--accent)">show all ${rows.length}</button></td></tr>`;
+  const tb = document.getElementById("tbody");
+  tb.innerHTML = html || `<tr><td colspan="5" class="mut" style="padding:16px 8px">no usage in range</td></tr>`;
+  const mo = document.getElementById("moreRows");
+  if (mo) mo.onclick = () => { S.allRows = true; renderTable(); };
+}
+
+function renderCal(){
+  // 日积分（全量，热力窗固定 13 周，不随 7d/30d 变）
+  const byDay = {};
+  RECS.forEach(r => { if (r.ts){ const k = dayKey(r.ts); byDay[k] = (byDay[k]||0) + r.v; } });
+
+  const today = new Date(); today.setHours(0,0,0,0);
+  const weeks = 13;
+  const monday = d => new Date(d.getTime() - ((d.getDay()+6)%7)*DAY);
+  const start = new Date(monday(today).getTime() - (weeks-1)*7*DAY);
+
+  // 窗口内的每一天，最后一天截到今天
+  const keys = [];
+  for (let i = 0; i < weeks*7; i++){
+    const d = new Date(start.getTime() + i*DAY);
+    if (d > today) break;
+    keys.push(ymd(d));
+  }
+
+  // daily：当天值；cumulative：从窗口起点累加（不是从全量第一条记录起算）
+  const vals = {};
+  if (S.heat === "cum"){
+    let acc = 0;
+    keys.forEach(k => { acc += byDay[k] || 0; vals[k] = acc; });
+  } else {
+    keys.forEach(k => { vals[k] = byDay[k] || 0; });
+  }
+
+  // 分位阈值分档（GitHub 式），比线性 max 更能拉开中间档
+  const nz = Object.values(vals).filter(v => v > 0).sort((a,b) => a-b);
+  const q = p => nz[Math.min(nz.length-1, Math.floor(p*(nz.length-1)))];
+  const t = nz.length > 1 ? [q(.25), q(.5), q(.75)] : [0,0,0];
+  const lv = v => !v ? 0 : nz.length <= 1 ? 3
+    : v <= t[0] ? 1 : v <= t[1] ? 2 : v <= t[2] ? 3 : 4;
+
+  const cell = 18, gap = 5, W = weeks*(cell+gap)+22, H = 7*(cell+gap)+2;
+  let svg = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" class="cal">`;
+  ["一","","三","","五","","日"].forEach((lb, i) => {
+    if (lb) svg += `<text x="0" y="${i*(cell+gap)+cell-5}" class="axis">${lb}</text>`;
+  });
+  for (let w = 0; w < weeks; w++)
+    for (let d = 0; d < 7; d++){
+      const i = w*7 + d;
+      if (i >= keys.length) continue;
+      const key = keys[i], v = vals[key] || 0, raw = byDay[key] || 0;
+      svg += `<rect class="cell l${lv(v)}" x="${20+w*(cell+gap)}" y="${d*(cell+gap)}" `
+           + `width="${cell}" height="${cell}" data-day="${key}" `
+           + `data-v="${v.toFixed(1)}" data-raw="${raw.toFixed(1)}"/>`;
+    }
+  svg += "</svg>";
+  const el = document.getElementById("cal");
+  el.innerHTML = svg;
+  el.querySelectorAll(".cell").forEach(c => {
+    const cum = S.heat === "cum";
+    c.addEventListener("mousemove", e => showTip(
+      `<div class="d">${c.dataset.day}</div>`
+      + `<div class="r"><span>${cum ? "cumulative" : "daily"}</span>`
+      + `<b>${fmt(+c.dataset.v)}</b></div>`
+      + (cum ? `<div class="r"><span>that day</span><b>+${fmt(+c.dataset.raw)}</b></div>` : ""),
+      e.clientX, e.clientY));
+    c.addEventListener("mouseleave", hideTip);
+  });
+  document.getElementById("activeDays").textContent =
+    keys.filter(k => (byDay[k] || 0) > 0).length;  // 按当天真实用量算，不按累计值
+}
+
+function syncUnit(){
+  const u = unit();
+  const a = document.getElementById("stackUnit"); if (a) a.textContent = u;
+  const b = document.getElementById("colUnit"); if (b) b.textContent = u;
+}
+
+const renderAll = () => {
+  applyMetric(); syncUnit();
+  renderStats(); renderStack(); renderHours(); renderTable(); renderCal();
+};
+
+function bind(){
+  document.getElementById("range").addEventListener("click", e => {
+    const b = e.target.closest("button[data-r]"); if (!b) return;
+    S.range = +b.dataset.r;
+    [...b.parentNode.children].forEach(x => x.classList.toggle("on", x === b));
+    renderAll();
+  });
+  document.getElementById("metric").addEventListener("click", e => {
+    const b = e.target.closest("button[data-m]"); if (!b) return;
+    S.metric = b.dataset.m;
+    [...b.parentNode.children].forEach(x => x.classList.toggle("on", x === b));
+    renderAll();
+  });
+  document.getElementById("group").addEventListener("click", e => {
+    const b = e.target.closest("button[data-g]"); if (!b) return;
+    S.group = b.dataset.g; S.hidden.clear();
+    [...b.parentNode.children].forEach(x => x.classList.toggle("on", x === b));
+    renderAll();
+  });
+  document.querySelector(".sh .seg").addEventListener("click", e => {
+    const b = e.target.closest("button[data-h]"); if (!b) return;
+    S.heat = b.dataset.h;
+    [...b.parentNode.children].forEach(x => x.classList.toggle("on", x === b));
+    renderCal();
+  });
+  document.getElementById("legend").addEventListener("click", e => {
+    const b = e.target.closest("button.lg"); if (!b) return;
+    const k = b.dataset.k;
+    S.hidden.has(k) ? S.hidden.delete(k) : S.hidden.add(k);
+    renderStack();
+  });
+  document.querySelector("thead").addEventListener("click", e => {
+    const th = e.target.closest("th.s"); if (!th) return;
+    const k = th.dataset.k;
+    if (S.sortKey === k) S.sortDir *= -1; else { S.sortKey = k; S.sortDir = -1; }
+    renderTable();
+  });
+  document.getElementById("tbody").addEventListener("click", e => {
+    if (e.target.closest(".det")) return;
+    const tr = e.target.closest("tr.row"); if (!tr) return;
+    const sid = tr.dataset.sid;
+    S.open.has(sid) ? S.open.delete(sid) : S.open.add(sid);
+    renderTable();
+  });
+  addEventListener("scroll", hideTip);
+}
+
+document.getElementById("gen").textContent = "generated " + DATA.generated;
+document.getElementById("foot").innerHTML =
+  `source · workbuddy.db / session_usage.credit_json + audit-log requestId<br>`
+  + `span · ${DATA.span[0]} → ${DATA.span[1]} · ${DATA.span[2]} active days · ${DATA.records.length} requests<br>`
+  + `note · credits from session_usage.credit_json, tokens from projects/*.jsonl message.usage; no 5h-weekly rolling limit`;
+bind();
+renderAll();
+</script>
+</body>
+</html>
