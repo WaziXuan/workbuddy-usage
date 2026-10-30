@@ -228,7 +228,54 @@ def summarize(records):
 
 # ---------------------------------------------------------------- 渲染
 
-def render(records, ctx, sessions, out_dir):
+def wb_theme():
+    """WorkBuddy 外观设置：light / dark / system（读不到就当 system，页面跟系统走）。"""
+    files = glob.glob(os.path.join(WB_DIR, "storage", "user-*", "global", "preferences.json"))
+    for f in sorted(files, key=os.path.getmtime, reverse=True):
+        try:
+            with open(f, encoding="utf-8") as fh:
+                prefs = json.load(fh)
+        except (OSError, ValueError):
+            continue
+        sel = prefs.get("appearance.themeSelection") or {}
+        t = sel.get("resourceKey") or prefs.get("appearanceTheme") or prefs.get("theme")
+        if t:
+            return str(t).lower()
+    return "system"
+
+
+def demo_data(seed=7):
+    """假数据，给截图和没装 WorkBuddy 的人试看用。"""
+    import random
+    rnd = random.Random(seed)
+    names = ["整理周报并发到群里", "分析销售数据表", "重构登录模块", "翻译 PDF 讲义",
+             "写一个爬虫脚本", "调试 Docker 部署", "做竞品调研", "生成产品介绍页",
+             "排查内存泄漏", "清洗客户 CSV", "写单元测试", "画系统架构图"]
+    models = ["deepseek-v4.1-flash", "glm-5", "kimi-k2.5", "hunyuan-t2"]
+    sessions, ctx, records = {}, {}, {}
+    now = datetime.now().timestamp() * 1000
+    for i, name in enumerate(names):
+        sid = "demo-%02d" % i
+        sessions[sid] = {"title": name, "model": rnd.choice(models), "cwd": ""}
+        size = 128000
+        ctx[sid] = (int(size * rnd.uniform(.15, .97)), size, 0)
+        # 前 6 个会话落在最近一周，其余往前铺，7 天 / 30 天 / 热力图都有东西看
+        start = now - ((i * 1.1 + rnd.uniform(0, 1)) if i < 6 else (i * 6 + rnd.uniform(0, 5))) * 864e5
+        for j in range(rnd.randint(6, 22)):
+            ts = start + rnd.uniform(0, 4 if i >= 6 else 1.2) * 864e5
+            hour = rnd.choice([9, 10, 11, 14, 15, 15, 16, 17, 20, 21, 22])
+            d = datetime.fromtimestamp(min(ts, now) / 1000).replace(
+                hour=hour, minute=rnd.randint(0, 59))
+            tin = rnd.randint(20000, 400000)
+            tout = rnd.randint(300, 9000)
+            rid = "%032x" % rnd.getrandbits(128)
+            records[rid] = {"rid": rid, "sid": sid, "credit": round(rnd.uniform(.4, 9), 2),
+                            "ts": int(d.timestamp() * 1000), "tin": tin, "tout": tout,
+                            "tcache": int(tin * rnd.uniform(.5, .95)), "ttok": tin + tout}
+    return records, ctx, sessions
+
+
+def render(records, ctx, sessions, out_dir, theme="system"):
     days = sorted({
         datetime.fromtimestamp(r["ts"] / 1000).strftime("%Y-%m-%d")
         for r in records.values() if r["ts"]
@@ -236,6 +283,7 @@ def render(records, ctx, sessions, out_dir):
     sids = {r["sid"] for r in records.values()}
     payload = {
         "generated": datetime.now().strftime("%Y-%m-%d %H:%M"),
+        "theme": theme,
         "span": [days[0] if days else "-", days[-1] if days else "-", len(days)],
         # 压缩成数组：[requestId, sessionId, 积分, 毫秒时间戳, in, out, cache, total]
         "records": [[r["rid"], r["sid"], round(r["credit"], 4), r["ts"],
@@ -258,6 +306,7 @@ def render(records, ctx, sessions, out_dir):
         html = fh.read()
     html = html.replace("__DATA__", json.dumps(payload, ensure_ascii=False,
                                                separators=(",", ":")))
+    html = html.replace("__WB_THEME__", theme)
 
     path = os.path.join(out_dir, "dashboard.html")
     with open(path, "w", encoding="utf-8") as fh:
@@ -317,6 +366,10 @@ def main():
     ap.add_argument("--publish", action="store_true",
                     help="生成后传进资料库（首次新建，之后原地更新同一页面）")
     ap.add_argument("--log", help="输出追加写进这个文件（给无窗口的定时任务用）")
+    ap.add_argument("--theme", choices=["light", "dark", "system"],
+                    help="页面默认主题；不给就读 WorkBuddy 的外观设置")
+    ap.add_argument("--demo", action="store_true",
+                    help="用假数据生成（不读本机、不写历史），截图或试看用")
     args = ap.parse_args()
 
     if args.log:
@@ -324,13 +377,18 @@ def main():
         print("---- %s" % datetime.now().isoformat(timespec="seconds"))
 
     os.makedirs(args.out, exist_ok=True)
-    records, ctx, sessions = collect()
-    if not records:
-        sys.exit("没有找到任何用量记录。")
-
-    merged = merge_history(records, args.out)
+    theme = args.theme or wb_theme()
+    if args.demo:
+        if args.publish:
+            sys.exit("--demo 不能和 --publish 一起用。")
+        merged, ctx, sessions = demo_data()
+    else:
+        records, ctx, sessions = collect()
+        if not records:
+            sys.exit("没有找到任何用量记录。")
+        merged = merge_history(records, args.out)
     s = summarize(merged)
-    path = render(merged, ctx, sessions, args.out)
+    path = render(merged, ctx, sessions, args.out, theme)
 
     print("总积分 %.2f · %d 请求 · %d 会话 · %d 天（%s → %s）" %
           (s["total"], s["requests"], s["sessions"], s["days"], s["first"], s["last"]))

@@ -16,10 +16,12 @@ python ~/.workbuddy/skills/wb-usage/wb_usage.py --open
 - 只要数据不要图：不加 `--open`，脚本会打印总积分/请求数/会话数
 - 传进资料库：`--publish`。首次在个人空间新建页面「WorkBuddy 用量」，之后按 `~/wb-usage/library.json` 里记下的 `node_block_id` 原地覆盖同一页面（版本号递增，侧栏只有一个条目）。走 WorkBuddy 本机 IPC，**WorkBuddy 必须开着**。
 - 定时/无窗口运行：加 `--log <文件>`，输出追加写进日志（配 `pythonw.exe` 用）
+- 主题：配色取自 WorkBuddy 的设计 token，默认跟 WorkBuddy 外观设置（浅色/深色/跟随系统），页面右上角也能切；`--theme light|dark|system` 强制指定
+- 试看：`--demo` 用假数据生成，不读本机、不写历史
 
 ## 能点什么
 
-面板是纯手写 SVG + 原生 JS，没有 CDN：
+面板是纯手写 SVG + 原生 JS，没有 CDN，界面是中文：
 
 - `7d / 30d / all` 区间切换（改区间会重算指标、柱状、小时分布、表格）
 - `credits / tokens` 维度切换：整页（指标、柱状、小时、表格、热力图）在积分和 token 之间切

@@ -4,9 +4,17 @@ A local, interactive usage dashboard for [WorkBuddy](https://www.workbuddy.cn/):
 
 WorkBuddy 本地用量看板：积分和 token 两个维度，按天 / 会话 / 模型拆开看。WorkBuddy 自己只有积分明细列表，没有图。
 
+**[Live demo (sample data)](https://wazixuan.github.io/workbuddy-usage/)**
+
+| Dark | Light |
+|---|---|
+| ![dark](docs/img/dark.png) | ![light](docs/img/light.png) |
+
+<sub>Screenshots use made-up sample data (`--demo`).</sub>
+
 ## What you get
 
-One self-contained HTML file (hand-written SVG + vanilla JS, no CDN, works offline):
+One self-contained HTML file (hand-written SVG + vanilla JS, no CDN, works offline), styled with WorkBuddy's own design tokens so it looks at home in the app:
 
 - `7d / 30d / all` range switch — metrics, charts and table all recompute
 - `credits / tokens` switch for the whole page
@@ -15,6 +23,7 @@ One self-contained HTML file (hand-written SVG + vanilla JS, no CDN, works offli
 - Session ranking — sortable by credits / requests / context usage; expand a row to see every request
 - Context-window usage per session (turns orange at ≥ 80 %)
 - 13-week activity heatmap, `daily / cumulative`
+- Light and dark themes that follow WorkBuddy (see below)
 
 ## Requirements
 
@@ -38,7 +47,19 @@ python wb_usage.py            # build ~/wb-usage/dashboard.html and print a summ
 python wb_usage.py --open     # build and open it in the browser
 python wb_usage.py --out DIR  # different output folder (or set WB_USAGE_OUT)
 python wb_usage.py --publish  # also upload it to your WorkBuddy 资料库 (Library)
+python wb_usage.py --demo --open   # try it with made-up data, no WorkBuddy needed
 ```
+
+### Light / dark
+
+Colors come from WorkBuddy 5.9's design tokens (its "IDE Light" and "IDE Night" themes: `#1a1a1a` page, teal `#00c29a` brand, the same text and border alphas). The page picks a theme in this order:
+
+1. `?theme=light` or `?theme=dark` in the URL
+2. The 跟随 / 浅色 / 深色 switch on the page (remembered in the browser)
+3. Your WorkBuddy appearance setting, read when the dashboard is built (`~/.workbuddy/storage/user-*/global/preferences.json`)
+4. The system light/dark setting, if WorkBuddy is set to follow the system
+
+`--theme light|dark|system` overrides step 3.
 
 ### Put it in the WorkBuddy Library (资料库)
 

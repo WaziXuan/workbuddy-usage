@@ -3,166 +3,202 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>usage</title>
+<title>WorkBuddy 用量</title>
 <style>
+/* 颜色取自 WorkBuddy 5.9 的设计 token（IDE Light / IDE Night），跟随应用主题 */
 :root{
-  --bg:#0a0b0d; --fg:#d6d9de; --dim:#6b7280; --dim2:#4b5058;
-  --line:#1a1d22; --line2:#242830; --accent:#4d8df6;
-  --mono:ui-monospace,"SF Mono","Cascadia Mono","JetBrains Mono",Consolas,monospace;
+  --bg:#ffffff; --card:#ffffff; --card2:#f7f7f7; --hover:#0000000a;
+  --fg:#000000; --fg2:#000000b3; --dim:#00000080; --dim2:#0000004d;
+  --line:#00000014; --line2:#0000000a; --track:#00000014;
+  --accent:#00c29a;
+  --up:#0cbf5b; --down:#f64041; --warn:#ff7800;
+  --seg-bg:#f2f2f2; --seg-on:#ffffff; --seg-shadow:0 1px 2px #0000001a;
+  --tip-bg:#ffffff; --tip-shadow:0 4px 16px #0000001f;
+  --bar:#00c29a; --other:#d9d9d9;
+  --c1:#00c29a; --c2:#3370ff; --c3:#7c5cfc; --c4:#ff9540; --c5:#06b6d4; --c6:#ec7474; --c7:#47cf84;
+  --h0:#f2f2f2; --h1:#bff0e6; --h2:#80e1cd; --h3:#40d1b3; --h4:#009273;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",
+         "Hiragino Sans GB",sans-serif;
+  --mono:ui-monospace,"SF Mono","Cascadia Mono",Consolas,monospace;
+  color-scheme:light;
+}
+:root[data-theme=dark]{
+  --bg:#1a1a1a; --card:#1f1f1f; --card2:#242424; --hover:#ffffff0f;
+  --fg:#ffffff; --fg2:#ffffffa6; --dim:#ffffff80; --dim2:#ffffff59;
+  --line:#ffffff1a; --line2:#ffffff0f; --track:#ffffff1a;
+  --accent:#22cba8;
+  --up:#24c46c; --down:#ec7474; --warn:#ff9540;
+  --seg-bg:#ffffff0f; --seg-on:#ffffff2e; --seg-shadow:none;
+  --tip-bg:#2a2a2a; --tip-shadow:0 6px 20px #00000080;
+  --bar:#22cba8; --other:#3d3d3d;
+  --c1:#22cba8; --c2:#4f86ff; --c3:#8f7bff; --c4:#ffa760; --c5:#22d3ee; --c6:#ef8b8b; --c7:#66d799;
+  --h0:#262626; --h1:#0e2520; --h2:#0f4f42; --h3:#128a72; --h4:#22cba8;
+  color-scheme:dark;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--fg);font:13px/1.55 -apple-system,"Segoe UI",
- "PingFang SC","Microsoft YaHei",sans-serif;padding:28px 24px 56px;
- -webkit-font-smoothing:antialiased}
+body{background:var(--bg);color:var(--fg);font:13px/1.6 var(--sans);
+ padding:28px 24px 56px;-webkit-font-smoothing:antialiased;transition:background .15s}
 .wrap{max-width:1000px;margin:0 auto}
+.n,.num{font-variant-numeric:tabular-nums}
 
-header{display:flex;align-items:baseline;justify-content:space-between;
- gap:16px;margin-bottom:18px}
-h1{font-family:var(--mono);font-size:15px;font-weight:600;letter-spacing:.4px}
-h1::before{content:"› ";color:var(--accent)}
-.meta{font-family:var(--mono);font-size:11px;color:var(--dim2)}
+header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px;flex-wrap:wrap}
+h1{font-size:18px;font-weight:600;display:flex;align-items:center;gap:8px}
+h1::before{content:"";width:8px;height:8px;border-radius:2px;background:var(--accent)}
+.hr{display:flex;align-items:center;gap:14px}
+.meta{font-size:12px;color:var(--dim)}
 
-.tools{display:flex;gap:26px;align-items:center;flex-wrap:wrap;
- padding-bottom:14px;border-bottom:1px solid var(--line)}
-.seg{display:flex;gap:0}
-.seg button{background:none;border:0;color:var(--dim);font-family:var(--mono);
- font-size:11.5px;padding:3px 0;margin-right:14px;cursor:pointer;position:relative}
+.tools{display:flex;gap:20px;align-items:center;flex-wrap:wrap;padding-bottom:16px}
+.tools .lbl{font-size:12px;color:var(--dim);margin-right:-12px}
+.seg{display:inline-flex;gap:2px;background:var(--seg-bg);border-radius:8px;padding:2px}
+.seg button{background:none;border:0;color:var(--fg2);font:12px/1 var(--sans);
+ padding:6px 11px;border-radius:6px;cursor:pointer;transition:background .12s,color .12s}
 .seg button:hover{color:var(--fg)}
-.seg button.on{color:var(--fg)}
-.seg button.on::after{content:"";position:absolute;left:0;right:0;bottom:-4px;
- height:1px;background:var(--accent)}
-.tools .lbl{font-family:var(--mono);font-size:11px;color:var(--dim2);margin-right:-14px}
+.seg button.on{background:var(--seg-on);color:var(--fg);font-weight:500;box-shadow:var(--seg-shadow)}
+.seg.sm button{padding:4px 9px;font-size:11.5px}
 
-.metrics{display:grid;grid-template-columns:repeat(4,1fr);
- border-bottom:1px solid var(--line)}
-.metric{padding:16px 0 15px 16px;border-left:1px solid var(--line)}
-.metric:first-child{border-left:0;padding-left:0}
-.metric .k{display:block;font-family:var(--mono);font-size:10.5px;
- color:var(--dim2);letter-spacing:.3px;margin-bottom:5px}
-.metric .v{font-family:var(--mono);font-size:22px;font-weight:500;letter-spacing:-.3px}
-.metric .s{display:block;font-size:10.5px;color:var(--dim2);margin-top:3px;
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.metric{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;min-width:0}
+.metric .k{display:block;font-size:12px;color:var(--dim);margin-bottom:6px}
+.metric .v{font-size:24px;font-weight:600;letter-spacing:-.3px;font-variant-numeric:tabular-nums}
+.metric .s{display:block;font-size:11.5px;color:var(--dim);margin-top:2px;
  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.metric .d{font-family:var(--mono);font-size:10.5px}
-.up{color:#4f9e7a}.down{color:#b8666a}
+.metric .d{font-size:11.5px;font-weight:500}
+.up{color:var(--up)}.down{color:var(--down)}
 
-section{margin-top:26px}
-.sh{display:flex;align-items:baseline;gap:10px;margin-bottom:10px;
- font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:.4px}
-.sh i{font-style:normal;color:var(--dim2);font-size:10.5px}
+section{margin-top:22px}
+.sh{display:flex;align-items:center;gap:10px;margin-bottom:10px;font-size:14px;font-weight:600}
+.sh i{font-style:normal;color:var(--dim);font-size:12px;font-weight:400}
 .sh .right{margin-left:auto}
-.frame{border:1px solid var(--line);border-radius:3px;padding:14px 12px 8px}
+.frame{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 14px 8px}
 
 .chart{width:100%;height:auto;display:block}
-.grid{stroke:var(--line2);stroke-width:1;stroke-dasharray:2 4}
-.axis{fill:var(--dim2);font-size:9.5px;font-family:var(--mono);user-select:none}
+.grid{stroke:var(--line);stroke-width:1;stroke-dasharray:3 4}
+.axis{fill:var(--dim);font-size:10px;font-family:var(--sans);user-select:none}
 .seg-rect{cursor:pointer;transition:opacity .1s}
-.seg-rect:hover{opacity:.78}
+.seg-rect:hover{opacity:.8}
 .col-hit{fill:transparent;cursor:crosshair}
-.bar2{fill:#2b5f9e;transition:fill .1s}
-.bar2:hover{fill:var(--accent)}
+.bar2{fill:var(--bar);opacity:.55;transition:opacity .1s}
+.bar2:hover{opacity:1}
 
 #tip{position:fixed;pointer-events:none;z-index:99;opacity:0;transition:opacity .1s;
- background:#111418;border:1px solid var(--line2);border-radius:3px;
- padding:8px 10px;font-size:11.5px;line-height:1.7;min-width:120px;
- font-family:var(--mono)}
+ background:var(--tip-bg);border:1px solid var(--line);border-radius:8px;box-shadow:var(--tip-shadow);
+ padding:8px 11px;font-size:12px;line-height:1.75;min-width:140px}
 #tip.on{opacity:1}
-#tip .d{color:var(--fg);margin-bottom:3px}
-#tip .r{display:flex;justify-content:space-between;gap:16px;color:var(--dim)}
-#tip .r b{color:var(--fg);font-weight:500}
-#tip .sw{display:inline-block;width:7px;height:7px;margin-right:6px;vertical-align:1px}
+#tip .d{color:var(--fg);font-weight:500;margin-bottom:2px}
+#tip .r{display:flex;justify-content:space-between;gap:16px;color:var(--fg2)}
+#tip .r b{color:var(--fg);font-weight:500;font-variant-numeric:tabular-nums}
+#tip .sw{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:6px;vertical-align:0}
 
-.legend{display:flex;flex-wrap:wrap;gap:4px 18px;padding:12px 2px 4px;
- border-top:1px solid var(--line);margin-top:12px}
+.legend{display:flex;flex-wrap:wrap;gap:4px 16px;padding:12px 2px 4px;
+ border-top:1px solid var(--line2);margin-top:10px}
 .lg{display:inline-flex;align-items:center;gap:6px;background:none;border:0;
- color:var(--dim);font-family:var(--mono);font-size:10.5px;cursor:pointer;padding:0}
+ color:var(--fg2);font:12px/1.6 var(--sans);cursor:pointer;padding:0}
 .lg:hover{color:var(--fg)}
-.lg.off{opacity:.3}
-.lg .sw{width:7px;height:7px;flex:none}
-.lg .pc{color:var(--dim2)}
+.lg.off{opacity:.35}
+.lg .sw{width:8px;height:8px;border-radius:2px;flex:none}
+.lg .pc{color:var(--dim);font-variant-numeric:tabular-nums}
 
-table{width:100%;border-collapse:collapse;font-size:12px}
-th{text-align:left;font-family:var(--mono);font-weight:400;color:var(--dim2);
- font-size:10.5px;letter-spacing:.3px;padding:6px 8px;border-bottom:1px solid var(--line);
- white-space:nowrap}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;font-weight:400;color:var(--dim);font-size:12px;padding:8px;
+ border-bottom:1px solid var(--line);white-space:nowrap}
 th.s{cursor:pointer}
 th.s:hover{color:var(--fg)}
 th .ar{opacity:0;margin-left:3px;font-size:8px}
+th.srt{color:var(--fg)}
 th.srt .ar{opacity:1;color:var(--accent)}
-th.num,td.num{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
-td{padding:8px;border-bottom:1px solid var(--line);vertical-align:middle}
+th.num,td.num{text-align:right;font-variant-numeric:tabular-nums}
+td{padding:9px 8px;border-bottom:1px solid var(--line2);vertical-align:middle}
 tbody tr:last-child td{border-bottom:0}
 tr.row{cursor:pointer}
-tr.row:hover td{background:#0e1116}
-.ttl .t{color:#c9ccd2;max-width:320px;overflow:hidden;text-overflow:ellipsis;
- white-space:nowrap}
-.ttl .sub{color:var(--dim2);font-size:10.5px;font-family:var(--mono)}
-.mut{color:var(--dim2)}
-.warn{color:#c08a3e}
+tr.row:hover td{background:var(--hover)}
+.ttl .t{color:var(--fg);max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ttl .sub{color:var(--dim);font-size:11.5px}
+.mut{color:var(--dim)}
+.warn{color:var(--warn);font-weight:500}
 .cv{display:flex;align-items:flex-start;gap:8px}
-.chev{width:6px;height:6px;border-right:1px solid var(--dim2);border-bottom:1px solid var(--dim2);
- transform:rotate(-45deg);transition:.15s;flex:none;margin-top:6px}
+.chev{width:6px;height:6px;border-right:1.5px solid var(--dim);border-bottom:1.5px solid var(--dim);
+ transform:rotate(-45deg);transition:.15s;flex:none;margin-top:7px}
 tr.open .chev{transform:rotate(45deg);border-color:var(--accent)}
-tr.det td{background:#0c0e12;padding:0;border-bottom:1px solid var(--line)}
+tr.det td{background:var(--card2);padding:0;border-bottom:1px solid var(--line2)}
 .det-in{padding:9px 8px 12px 30px}
-.req{display:flex;justify-content:space-between;gap:16px;font-family:var(--mono);
- font-size:11px;color:var(--dim);padding:2px 0}
-.req b{color:#b9bdc4;font-weight:400}
-.req i{color:var(--dim2);font-style:normal}
-.det-empty{color:var(--dim2);font-size:11px;padding:3px 0}
+.req{display:flex;justify-content:space-between;gap:16px;font-size:12px;color:var(--fg2);padding:2px 0;
+ font-variant-numeric:tabular-nums}
+.req b{color:var(--fg);font-weight:500}
+.req i{color:var(--dim);font-style:normal;font-family:var(--mono);font-size:11px}
+.det-empty{color:var(--dim);font-size:12px;padding:3px 0}
 .bar-cell{width:150px}
-.track{height:3px;background:var(--line2);overflow:hidden}
-.track i{display:block;height:100%;background:var(--accent);opacity:.75}
+.track{height:4px;border-radius:2px;background:var(--track);overflow:hidden}
+.track i{display:block;height:100%;border-radius:2px;background:var(--accent)}
 
 .heat{display:flex;gap:36px;align-items:center;justify-content:center;
- border:1px solid var(--line);border-radius:3px;padding:18px}
-.cal{display:block}
-.cell{fill:#12151a}
-.cell:hover{stroke:#5d7fae;stroke-width:1}
-.l1{fill:#16304b}.l2{fill:#1d4570}.l3{fill:#2a6396}.l4{fill:#4985c4}
-.lgnd{font-family:var(--mono);font-size:10.5px;color:var(--dim2);line-height:1.9;
- text-align:right;white-space:nowrap}
-.lgnd b{color:var(--dim);font-weight:400}
-.sw2{display:inline-block;width:8px;height:8px;vertical-align:-1px;margin-left:3px}
-.sw2.l0{background:#12151a;box-shadow:inset 0 0 0 1px var(--line2)}
-.sw2.l1{background:#16304b}.sw2.l2{background:#1d4570}
-.sw2.l3{background:#2a6396}.sw2.l4{background:#4985c4}
+ background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px}
+.cal{display:block;max-width:100%}
+.cell{fill:var(--h0)}
+.cell:hover{stroke:var(--fg2);stroke-width:1}
+.l1{fill:var(--h1)}.l2{fill:var(--h2)}.l3{fill:var(--h3)}.l4{fill:var(--h4)}
+.lgnd{font-size:12px;color:var(--dim);line-height:2;text-align:right;white-space:nowrap}
+.lgnd b{color:var(--fg);font-weight:600}
+.sw2{display:inline-block;width:10px;height:10px;border-radius:2px;vertical-align:-1px;margin-left:3px}
+.sw2.l0{background:var(--h0)}.sw2.l1{background:var(--h1)}.sw2.l2{background:var(--h2)}
+.sw2.l3{background:var(--h3)}.sw2.l4{background:var(--h4)}
 
-footer{margin-top:34px;padding-top:12px;border-top:1px solid var(--line);
- font-family:var(--mono);font-size:10.5px;color:var(--dim2);line-height:1.9}
-@media(max-width:720px){.metrics{grid-template-columns:repeat(2,1fr)}
- .metric:nth-child(3){border-left:0;padding-left:0}.heat{flex-direction:column;gap:14px}}
+footer{margin-top:30px;padding-top:12px;border-top:1px solid var(--line2);
+ font-size:11.5px;color:var(--dim);line-height:1.9}
+@media(max-width:720px){body{padding:20px 16px 40px}.metrics{grid-template-columns:repeat(2,1fr)}
+ .heat{flex-direction:column;gap:14px}.bar-cell{display:none}}
 </style>
+<script>
+/* 主题在首帧前定好，避免闪一下：URL ?theme= > 页面上手动选的 > WorkBuddy 设置 > 系统 */
+(function(){
+  var q = new URLSearchParams(location.search).get("theme"), pref = "auto";
+  try { pref = localStorage.getItem("wbu-theme") || "auto"; } catch (e) {}
+  window.__wbTheme = {pref: pref, url: q};
+  var wb = "__WB_THEME__";
+  var t = (q === "light" || q === "dark") ? q
+        : (pref === "light" || pref === "dark") ? pref
+        : (wb === "light" || wb === "dark") ? wb
+        : (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  document.documentElement.dataset.theme = t;
+})();
+</script>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <h1>usage</h1>
-    <div class="meta" id="gen">—</div>
+    <h1>用量</h1>
+    <div class="hr">
+      <div class="meta" id="gen">—</div>
+      <div class="seg sm" id="theme" title="主题">
+        <button data-t="auto">跟随</button>
+        <button data-t="light">浅色</button>
+        <button data-t="dark">深色</button>
+      </div>
+    </div>
   </header>
 
   <div class="tools">
-    <span class="lbl">range</span>
+    <span class="lbl">范围</span>
     <div class="seg" id="range">
-      <button data-r="7" class="on">7d</button>
-      <button data-r="30">30d</button>
-      <button data-r="0">all</button>
+      <button data-r="7" class="on">7 天</button>
+      <button data-r="30">30 天</button>
+      <button data-r="0">全部</button>
     </div>
-    <span class="lbl">group</span>
+    <span class="lbl">分组</span>
     <div class="seg" id="group">
-      <button data-g="session" class="on">session</button>
-      <button data-g="model">model</button>
+      <button data-g="session" class="on">会话</button>
+      <button data-g="model">模型</button>
     </div>
-    <span class="lbl">metric</span>
+    <span class="lbl">指标</span>
     <div class="seg" id="metric">
-      <button data-m="credits" class="on">credits</button>
-      <button data-m="tokens">tokens</button>
+      <button data-m="credits" class="on">积分</button>
+      <button data-m="tokens">Token</button>
     </div>
   </div>
 
   <div class="metrics" id="stats"></div>
 
   <section>
-    <div class="sh">daily <span id="stackUnit">credits</span> <i id="stackTag"></i></div>
+    <div class="sh"><span>每日<span id="stackUnit">积分</span></span> <i id="stackTag"></i></div>
     <div class="frame">
       <div id="stack"></div>
       <div class="legend" id="legend"></div>
@@ -170,20 +206,20 @@ footer{margin-top:34px;padding-top:12px;border-top:1px solid var(--line);
   </section>
 
   <section>
-    <div class="sh">hour of day <i>all time</i></div>
+    <div class="sh">时段分布 <i>所选范围内，按小时</i></div>
     <div class="frame"><div id="hours"></div></div>
   </section>
 
   <section>
-    <div class="sh">sessions <i>click a row to expand · click header to sort</i></div>
+    <div class="sh">会话排行 <i>点行展开明细 · 点表头排序</i></div>
     <div class="frame" style="padding:4px 10px 2px">
       <table>
         <thead><tr>
-          <th class="s" data-k="title">session<span class="ar">▲</span></th>
-          <th class="s num" data-k="credit"><span id="colUnit">credits</span><span class="ar">▲</span></th>
-          <th class="s num" data-k="req">reqs<span class="ar">▲</span></th>
-          <th>share</th>
-          <th class="s num" data-k="pct">context<span class="ar">▲</span></th>
+          <th class="s" data-k="title">会话<span class="ar">▲</span></th>
+          <th class="s num" data-k="credit"><span id="colUnit">积分</span><span class="ar">▲</span></th>
+          <th class="s num" data-k="req">请求<span class="ar">▲</span></th>
+          <th>占比</th>
+          <th class="s num" data-k="pct">上下文<span class="ar">▲</span></th>
         </tr></thead>
         <tbody id="tbody"></tbody>
       </table>
@@ -191,18 +227,18 @@ footer{margin-top:34px;padding-top:12px;border-top:1px solid var(--line);
   </section>
 
   <section>
-    <div class="sh">activity <i>13 weeks</i>
-      <div class="right seg">
-        <button data-h="daily" class="on">daily</button>
-        <button data-h="cum">cumulative</button>
+    <div class="sh">活跃度 <i>近 13 周</i>
+      <div class="right seg sm">
+        <button data-h="daily" class="on">每日</button>
+        <button data-h="cum">累计</button>
       </div>
     </div>
     <div class="heat">
       <div id="cal"></div>
       <div class="lgnd">
-        <div><b id="activeDays">0</b> active days</div>
+        <div>活跃 <b id="activeDays">0</b> 天</div>
         <div><span class="sw2 l0"></span><span class="sw2 l1"></span><span class="sw2 l2"></span><span class="sw2 l3"></span><span class="sw2 l4"></span></div>
-        <div>low → high</div>
+        <div>少 → 多</div>
       </div>
     </div>
   </section>
@@ -214,15 +250,19 @@ footer{margin-top:34px;padding-top:12px;border-top:1px solid var(--line);
 <script>
 const DATA = __DATA__;
 
-const PALETTE = ["#4d8df6","#3f9c8f","#7b6fc0","#b08050","#a85e6d","#6f8250","#4f7fa8"];
-const OTHER = "#3a4048";
+let PALETTE = [], OTHER = "";
+function readColors(){
+  const cs = getComputedStyle(document.documentElement);
+  PALETTE = [1,2,3,4,5,6,7].map(i => cs.getPropertyValue("--c"+i).trim());
+  OTHER = cs.getPropertyValue("--other").trim();
+}
 const DAY = 864e5;
 
 const S = {range:7, group:"session", sortKey:"credit", sortDir:-1,
            hidden:new Set(), open:new Set(), heat:"daily", allRows:false,
            metric:"credits"};
 const applyMetric = () => RECS.forEach(r => { r.v = S.metric === "tokens" ? r.ttok : r.credit; });
-const unit = () => S.metric === "tokens" ? "tokens" : "credits";
+const unit = () => S.metric === "tokens" ? "Token" : "积分";
 
 const RECS = DATA.records.map(r => ({rid:r[0], sid:r[1], credit:r[2], ts:r[3], tin:r[4]||0, tout:r[5]||0, tcache:r[6]||0, ttok:r[7]||0}));
 const SESS = DATA.sessions;
@@ -266,14 +306,14 @@ function renderStats(){
                                  .reduce((a,r) => a + r.v, 0);
     if (before > 0){
       const p = (total - before) / before * 100;
-      delta = `<span class="d ${p >= 0 ? "up" : "down"}">${p >= 0 ? "+" : ""}${p.toFixed(0)}% vs prev</span>`;
+      delta = `<span class="d ${p >= 0 ? "up" : "down"}">${p >= 0 ? "+" : ""}${p.toFixed(0)}%</span> 较上期`;
     }
   }
   const cells = [
-    ["total", fmt(total), delta || unit()],
-    ["requests", recs.length, "model calls"],
-    ["sessions", new Set(recs.map(r => r.sid)).size, "with usage"],
-    ["peak day", fmt(peak[1]), md(peak[0])]
+    [S.metric === "tokens" ? "Token 总量" : "积分总量", fmt(total), delta || unit()],
+    ["请求", recs.length, "次模型调用"],
+    ["会话", new Set(recs.map(r => r.sid)).size, "个有用量"],
+    ["峰值日", fmt(peak[1]), md(peak[0])]
   ];
   document.getElementById("stats").innerHTML = cells.map(([k,v,s]) =>
     `<div class="metric"><span class="k">${k}</span><span class="v">${v}</span>` +
@@ -355,7 +395,7 @@ function renderStack(){
   }
   document.getElementById("legend").innerHTML = lg;
   document.getElementById("stackTag").textContent =
-    `${all[0]} → ${all[all.length-1]} · ${S.group}`;
+    `${all[0]} → ${all[all.length-1]} · 按${S.group === "model" ? "模型" : "会话"}`;
 
   document.getElementById("stackSvg").querySelectorAll(".col-hit").forEach(hit => {
     hit.addEventListener("mousemove", e => {
@@ -363,7 +403,7 @@ function renderStack(){
       const rows = Object.entries(stack).sort((a,b) => b[1]-a[1]).slice(0,5);
       if (other[d]) rows.push(["__other", other[d]]);
       let html = `<div class="d">${d} · ${fmt(dayTotal(d))}</div>`;
-      if (!rows.length) html += `<div class="r"><span>no usage</span></div>`;
+      if (!rows.length) html += `<div class="r"><span>无用量</span></div>`;
       rows.forEach(([k,v]) => {
         html += `<div class="r"><span><span class="sw" style="background:`
           + `${k==="__other"?OTHER:colorOf(k)}"></span>`
@@ -444,8 +484,8 @@ function renderTable(){
     if (open){
       const list = [...r.list].sort((a,b) => a.ts-b.ts);
       s += `<tr class="det"><td colspan="5"><div class="det-in">`
-        + `<div class="mut" style="font-size:10.5px;margin-bottom:5px">${list.length} reqs · `
-        + `${r.credit.toFixed(2)} credits · ${fmt(r.tok)} tok${r.cwd ? " · " + esc(r.cwd) : ""}</div>`
+        + `<div class="mut" style="font-size:10.5px;margin-bottom:5px">${list.length} 次请求 · `
+        + `${S.metric === "tokens" ? fmt(r.credit) + " Token" : r.credit.toFixed(2) + " 积分"}${r.cwd ? " · " + esc(r.cwd) : ""}</div>`
         + (list.length ? list.map(x => `<div class="req">`
             + `<span>${new Date(x.ts).toLocaleString("zh-CN",{hour12:false})} `
             + `<i>${x.rid.slice(0,8)}</i></span><b>${x.credit.toFixed(2)}`
@@ -458,9 +498,9 @@ function renderTable(){
 
   if (rows.length > shown.length)
     html += `<tr><td colspan="5" style="padding:9px 8px"><button class="lg" id="moreRows" `
-      + `style="color:var(--accent)">show all ${rows.length}</button></td></tr>`;
+      + `style="color:var(--accent)">显示全部 ${rows.length} 个</button></td></tr>`;
   const tb = document.getElementById("tbody");
-  tb.innerHTML = html || `<tr><td colspan="5" class="mut" style="padding:16px 8px">no usage in range</td></tr>`;
+  tb.innerHTML = html || `<tr><td colspan="5" class="mut" style="padding:16px 8px">这个范围内没有用量</td></tr>`;
   const mo = document.getElementById("moreRows");
   if (mo) mo.onclick = () => { S.allRows = true; renderTable(); };
 }
@@ -510,7 +550,7 @@ function renderCal(){
       if (i >= keys.length) continue;
       const key = keys[i], v = vals[key] || 0, raw = byDay[key] || 0;
       svg += `<rect class="cell l${lv(v)}" x="${20+w*(cell+gap)}" y="${d*(cell+gap)}" `
-           + `width="${cell}" height="${cell}" data-day="${key}" `
+           + `width="${cell}" height="${cell}" rx="3" data-day="${key}" `
            + `data-v="${v.toFixed(1)}" data-raw="${raw.toFixed(1)}"/>`;
     }
   svg += "</svg>";
@@ -520,9 +560,9 @@ function renderCal(){
     const cum = S.heat === "cum";
     c.addEventListener("mousemove", e => showTip(
       `<div class="d">${c.dataset.day}</div>`
-      + `<div class="r"><span>${cum ? "cumulative" : "daily"}</span>`
+      + `<div class="r"><span>${cum ? "累计" : "当天"}</span>`
       + `<b>${fmt(+c.dataset.v)}</b></div>`
-      + (cum ? `<div class="r"><span>that day</span><b>+${fmt(+c.dataset.raw)}</b></div>` : ""),
+      + (cum ? `<div class="r"><span>当天新增</span><b>+${fmt(+c.dataset.raw)}</b></div>` : ""),
       e.clientX, e.clientY));
     c.addEventListener("mouseleave", hideTip);
   });
@@ -537,7 +577,7 @@ function syncUnit(){
 }
 
 const renderAll = () => {
-  applyMetric(); syncUnit();
+  readColors(); applyMetric(); syncUnit();
   renderStats(); renderStack(); renderHours(); renderTable(); renderCal();
 };
 
@@ -560,7 +600,7 @@ function bind(){
     [...b.parentNode.children].forEach(x => x.classList.toggle("on", x === b));
     renderAll();
   });
-  document.querySelector(".sh .seg").addEventListener("click", e => {
+  document.querySelector(".sh .right.seg").addEventListener("click", e => {
     const b = e.target.closest("button[data-h]"); if (!b) return;
     S.heat = b.dataset.h;
     [...b.parentNode.children].forEach(x => x.classList.toggle("on", x === b));
@@ -586,13 +626,30 @@ function bind(){
     renderTable();
   });
   addEventListener("scroll", hideTip);
+
+  // 主题切换：跟随 = WorkBuddy 设置，没有设置就跟系统
+  const mq = matchMedia("(prefers-color-scheme: dark)");
+  const wb = DATA.theme;
+  const pick = p => (window.__wbTheme.url === "light" || window.__wbTheme.url === "dark") ? window.__wbTheme.url
+    : (p === "light" || p === "dark") ? p
+    : (wb === "light" || wb === "dark") ? wb : (mq.matches ? "dark" : "light");
+  const tg = document.getElementById("theme");
+  const mark = () => [...tg.children].forEach(x => x.classList.toggle("on", x.dataset.t === window.__wbTheme.pref));
+  const apply = () => { document.documentElement.dataset.theme = pick(window.__wbTheme.pref); renderAll(); };
+  tg.addEventListener("click", e => {
+    const b = e.target.closest("button[data-t]"); if (!b) return;
+    window.__wbTheme.pref = b.dataset.t;
+    try { localStorage.setItem("wbu-theme", b.dataset.t); } catch (err) {}
+    mark(); apply();
+  });
+  mq.addEventListener("change", () => { if (window.__wbTheme.pref === "auto") apply(); });
+  mark();
 }
 
-document.getElementById("gen").textContent = "generated " + DATA.generated;
+document.getElementById("gen").textContent = "更新于 " + DATA.generated;
 document.getElementById("foot").innerHTML =
-  `source · workbuddy.db / session_usage.credit_json + audit-log requestId<br>`
-  + `span · ${DATA.span[0]} → ${DATA.span[1]} · ${DATA.span[2]} active days · ${DATA.records.length} requests<br>`
-  + `note · credits from session_usage.credit_json, tokens from projects/*.jsonl message.usage; no 5h-weekly rolling limit`;
+  `数据：${DATA.span[0]} → ${DATA.span[1]} · ${DATA.span[2]} 个活跃日 · ${DATA.records.length} 次请求<br>`
+  + `积分来自 workbuddy.db 的 session_usage.credit_json，Token 来自 projects/*.jsonl 的 message.usage；WorkBuddy 没有 5 小时 / 每周滚动额度`;
 bind();
 renderAll();
 </script>

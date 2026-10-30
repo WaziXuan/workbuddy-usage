@@ -1,0 +1,657 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>WorkBuddy 用量</title>
+<style>
+/* 颜色取自 WorkBuddy 5.9 的设计 token（IDE Light / IDE Night），跟随应用主题 */
+:root{
+  --bg:#ffffff; --card:#ffffff; --card2:#f7f7f7; --hover:#0000000a;
+  --fg:#000000; --fg2:#000000b3; --dim:#00000080; --dim2:#0000004d;
+  --line:#00000014; --line2:#0000000a; --track:#00000014;
+  --accent:#00c29a;
+  --up:#0cbf5b; --down:#f64041; --warn:#ff7800;
+  --seg-bg:#f2f2f2; --seg-on:#ffffff; --seg-shadow:0 1px 2px #0000001a;
+  --tip-bg:#ffffff; --tip-shadow:0 4px 16px #0000001f;
+  --bar:#00c29a; --other:#d9d9d9;
+  --c1:#00c29a; --c2:#3370ff; --c3:#7c5cfc; --c4:#ff9540; --c5:#06b6d4; --c6:#ec7474; --c7:#47cf84;
+  --h0:#f2f2f2; --h1:#bff0e6; --h2:#80e1cd; --h3:#40d1b3; --h4:#009273;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",
+         "Hiragino Sans GB",sans-serif;
+  --mono:ui-monospace,"SF Mono","Cascadia Mono",Consolas,monospace;
+  color-scheme:light;
+}
+:root[data-theme=dark]{
+  --bg:#1a1a1a; --card:#1f1f1f; --card2:#242424; --hover:#ffffff0f;
+  --fg:#ffffff; --fg2:#ffffffa6; --dim:#ffffff80; --dim2:#ffffff59;
+  --line:#ffffff1a; --line2:#ffffff0f; --track:#ffffff1a;
+  --accent:#22cba8;
+  --up:#24c46c; --down:#ec7474; --warn:#ff9540;
+  --seg-bg:#ffffff0f; --seg-on:#ffffff2e; --seg-shadow:none;
+  --tip-bg:#2a2a2a; --tip-shadow:0 6px 20px #00000080;
+  --bar:#22cba8; --other:#3d3d3d;
+  --c1:#22cba8; --c2:#4f86ff; --c3:#8f7bff; --c4:#ffa760; --c5:#22d3ee; --c6:#ef8b8b; --c7:#66d799;
+  --h0:#262626; --h1:#0e2520; --h2:#0f4f42; --h3:#128a72; --h4:#22cba8;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--fg);font:13px/1.6 var(--sans);
+ padding:28px 24px 56px;-webkit-font-smoothing:antialiased;transition:background .15s}
+.wrap{max-width:1000px;margin:0 auto}
+.n,.num{font-variant-numeric:tabular-nums}
+
+header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px;flex-wrap:wrap}
+h1{font-size:18px;font-weight:600;display:flex;align-items:center;gap:8px}
+h1::before{content:"";width:8px;height:8px;border-radius:2px;background:var(--accent)}
+.hr{display:flex;align-items:center;gap:14px}
+.meta{font-size:12px;color:var(--dim)}
+
+.tools{display:flex;gap:20px;align-items:center;flex-wrap:wrap;padding-bottom:16px}
+.tools .lbl{font-size:12px;color:var(--dim);margin-right:-12px}
+.seg{display:inline-flex;gap:2px;background:var(--seg-bg);border-radius:8px;padding:2px}
+.seg button{background:none;border:0;color:var(--fg2);font:12px/1 var(--sans);
+ padding:6px 11px;border-radius:6px;cursor:pointer;transition:background .12s,color .12s}
+.seg button:hover{color:var(--fg)}
+.seg button.on{background:var(--seg-on);color:var(--fg);font-weight:500;box-shadow:var(--seg-shadow)}
+.seg.sm button{padding:4px 9px;font-size:11.5px}
+
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.metric{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;min-width:0}
+.metric .k{display:block;font-size:12px;color:var(--dim);margin-bottom:6px}
+.metric .v{font-size:24px;font-weight:600;letter-spacing:-.3px;font-variant-numeric:tabular-nums}
+.metric .s{display:block;font-size:11.5px;color:var(--dim);margin-top:2px;
+ white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.metric .d{font-size:11.5px;font-weight:500}
+.up{color:var(--up)}.down{color:var(--down)}
+
+section{margin-top:22px}
+.sh{display:flex;align-items:center;gap:10px;margin-bottom:10px;font-size:14px;font-weight:600}
+.sh i{font-style:normal;color:var(--dim);font-size:12px;font-weight:400}
+.sh .right{margin-left:auto}
+.frame{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 14px 8px}
+
+.chart{width:100%;height:auto;display:block}
+.grid{stroke:var(--line);stroke-width:1;stroke-dasharray:3 4}
+.axis{fill:var(--dim);font-size:10px;font-family:var(--sans);user-select:none}
+.seg-rect{cursor:pointer;transition:opacity .1s}
+.seg-rect:hover{opacity:.8}
+.col-hit{fill:transparent;cursor:crosshair}
+.bar2{fill:var(--bar);opacity:.55;transition:opacity .1s}
+.bar2:hover{opacity:1}
+
+#tip{position:fixed;pointer-events:none;z-index:99;opacity:0;transition:opacity .1s;
+ background:var(--tip-bg);border:1px solid var(--line);border-radius:8px;box-shadow:var(--tip-shadow);
+ padding:8px 11px;font-size:12px;line-height:1.75;min-width:140px}
+#tip.on{opacity:1}
+#tip .d{color:var(--fg);font-weight:500;margin-bottom:2px}
+#tip .r{display:flex;justify-content:space-between;gap:16px;color:var(--fg2)}
+#tip .r b{color:var(--fg);font-weight:500;font-variant-numeric:tabular-nums}
+#tip .sw{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:6px;vertical-align:0}
+
+.legend{display:flex;flex-wrap:wrap;gap:4px 16px;padding:12px 2px 4px;
+ border-top:1px solid var(--line2);margin-top:10px}
+.lg{display:inline-flex;align-items:center;gap:6px;background:none;border:0;
+ color:var(--fg2);font:12px/1.6 var(--sans);cursor:pointer;padding:0}
+.lg:hover{color:var(--fg)}
+.lg.off{opacity:.35}
+.lg .sw{width:8px;height:8px;border-radius:2px;flex:none}
+.lg .pc{color:var(--dim);font-variant-numeric:tabular-nums}
+
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;font-weight:400;color:var(--dim);font-size:12px;padding:8px;
+ border-bottom:1px solid var(--line);white-space:nowrap}
+th.s{cursor:pointer}
+th.s:hover{color:var(--fg)}
+th .ar{opacity:0;margin-left:3px;font-size:8px}
+th.srt{color:var(--fg)}
+th.srt .ar{opacity:1;color:var(--accent)}
+th.num,td.num{text-align:right;font-variant-numeric:tabular-nums}
+td{padding:9px 8px;border-bottom:1px solid var(--line2);vertical-align:middle}
+tbody tr:last-child td{border-bottom:0}
+tr.row{cursor:pointer}
+tr.row:hover td{background:var(--hover)}
+.ttl .t{color:var(--fg);max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ttl .sub{color:var(--dim);font-size:11.5px}
+.mut{color:var(--dim)}
+.warn{color:var(--warn);font-weight:500}
+.cv{display:flex;align-items:flex-start;gap:8px}
+.chev{width:6px;height:6px;border-right:1.5px solid var(--dim);border-bottom:1.5px solid var(--dim);
+ transform:rotate(-45deg);transition:.15s;flex:none;margin-top:7px}
+tr.open .chev{transform:rotate(45deg);border-color:var(--accent)}
+tr.det td{background:var(--card2);padding:0;border-bottom:1px solid var(--line2)}
+.det-in{padding:9px 8px 12px 30px}
+.req{display:flex;justify-content:space-between;gap:16px;font-size:12px;color:var(--fg2);padding:2px 0;
+ font-variant-numeric:tabular-nums}
+.req b{color:var(--fg);font-weight:500}
+.req i{color:var(--dim);font-style:normal;font-family:var(--mono);font-size:11px}
+.det-empty{color:var(--dim);font-size:12px;padding:3px 0}
+.bar-cell{width:150px}
+.track{height:4px;border-radius:2px;background:var(--track);overflow:hidden}
+.track i{display:block;height:100%;border-radius:2px;background:var(--accent)}
+
+.heat{display:flex;gap:36px;align-items:center;justify-content:center;
+ background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px}
+.cal{display:block;max-width:100%}
+.cell{fill:var(--h0)}
+.cell:hover{stroke:var(--fg2);stroke-width:1}
+.l1{fill:var(--h1)}.l2{fill:var(--h2)}.l3{fill:var(--h3)}.l4{fill:var(--h4)}
+.lgnd{font-size:12px;color:var(--dim);line-height:2;text-align:right;white-space:nowrap}
+.lgnd b{color:var(--fg);font-weight:600}
+.sw2{display:inline-block;width:10px;height:10px;border-radius:2px;vertical-align:-1px;margin-left:3px}
+.sw2.l0{background:var(--h0)}.sw2.l1{background:var(--h1)}.sw2.l2{background:var(--h2)}
+.sw2.l3{background:var(--h3)}.sw2.l4{background:var(--h4)}
+
+footer{margin-top:30px;padding-top:12px;border-top:1px solid var(--line2);
+ font-size:11.5px;color:var(--dim);line-height:1.9}
+@media(max-width:720px){body{padding:20px 16px 40px}.metrics{grid-template-columns:repeat(2,1fr)}
+ .heat{flex-direction:column;gap:14px}.bar-cell{display:none}}
+</style>
+<script>
+/* 主题在首帧前定好，避免闪一下：URL ?theme= > 页面上手动选的 > WorkBuddy 设置 > 系统 */
+(function(){
+  var q = new URLSearchParams(location.search).get("theme"), pref = "auto";
+  try { pref = localStorage.getItem("wbu-theme") || "auto"; } catch (e) {}
+  window.__wbTheme = {pref: pref, url: q};
+  var wb = "system";
+  var t = (q === "light" || q === "dark") ? q
+        : (pref === "light" || pref === "dark") ? pref
+        : (wb === "light" || wb === "dark") ? wb
+        : (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  document.documentElement.dataset.theme = t;
+})();
+</script>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>用量</h1>
+    <div class="hr">
+      <div class="meta" id="gen">—</div>
+      <div class="seg sm" id="theme" title="主题">
+        <button data-t="auto">跟随</button>
+        <button data-t="light">浅色</button>
+        <button data-t="dark">深色</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="tools">
+    <span class="lbl">范围</span>
+    <div class="seg" id="range">
+      <button data-r="7" class="on">7 天</button>
+      <button data-r="30">30 天</button>
+      <button data-r="0">全部</button>
+    </div>
+    <span class="lbl">分组</span>
+    <div class="seg" id="group">
+      <button data-g="session" class="on">会话</button>
+      <button data-g="model">模型</button>
+    </div>
+    <span class="lbl">指标</span>
+    <div class="seg" id="metric">
+      <button data-m="credits" class="on">积分</button>
+      <button data-m="tokens">Token</button>
+    </div>
+  </div>
+
+  <div class="metrics" id="stats"></div>
+
+  <section>
+    <div class="sh"><span>每日<span id="stackUnit">积分</span></span> <i id="stackTag"></i></div>
+    <div class="frame">
+      <div id="stack"></div>
+      <div class="legend" id="legend"></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sh">时段分布 <i>所选范围内，按小时</i></div>
+    <div class="frame"><div id="hours"></div></div>
+  </section>
+
+  <section>
+    <div class="sh">会话排行 <i>点行展开明细 · 点表头排序</i></div>
+    <div class="frame" style="padding:4px 10px 2px">
+      <table>
+        <thead><tr>
+          <th class="s" data-k="title">会话<span class="ar">▲</span></th>
+          <th class="s num" data-k="credit"><span id="colUnit">积分</span><span class="ar">▲</span></th>
+          <th class="s num" data-k="req">请求<span class="ar">▲</span></th>
+          <th>占比</th>
+          <th class="s num" data-k="pct">上下文<span class="ar">▲</span></th>
+        </tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="sh">活跃度 <i>近 13 周</i>
+      <div class="right seg sm">
+        <button data-h="daily" class="on">每日</button>
+        <button data-h="cum">累计</button>
+      </div>
+    </div>
+    <div class="heat">
+      <div id="cal"></div>
+      <div class="lgnd">
+        <div>活跃 <b id="activeDays">0</b> 天</div>
+        <div><span class="sw2 l0"></span><span class="sw2 l1"></span><span class="sw2 l2"></span><span class="sw2 l3"></span><span class="sw2 l4"></span></div>
+        <div>少 → 多</div>
+      </div>
+    </div>
+  </section>
+
+  <footer id="foot">—</footer>
+</div>
+<div id="tip"></div>
+
+<script>
+const DATA = {"generated":"2026-10-30 15:00","theme":"system","span":["2026-08-26","2026-10-30",31],"records":[["cbf93e3fb1f925cb7dd1e6c7187f132d","demo-11",7.5,1787706000907,202349,8341,189240,210690],["53fcba583c787566293256b6593ff3df","demo-11",8.62,1787726801111,191212,8855,117864,200067],["636a5479e29f9ecb34d982fb47e2cc36","demo-11",4.39,1787728335408,77293,2050,39085,79343],["8fae625eb278f801fdb9ba32c9b4bc96","demo-11",7.17,1787755761919,62405,8332,48836,70737],["9444785741d8b452c5ffd933b0665350","demo-11",2.39,1787814643602,262827,7489,170922,270316],["0671ce23a55741cbe371613e6c10b601","demo-11",3.6,1787821173703,226883,1711,144391,228594],["f033b91536f784ccd0b3a17548a28354","demo-11",6.42,1787832979399,323042,2903,233960,325945],["3bcb9bcea17870d5e24c6c60fb7f36ee","demo-11",8.52,1787833970279,109708,6514,61117,116222],["27c37e5685903d9753a000dc94e27f77","demo-11",7.86,1787838069378,37765,6009,26535,43774],["d3971494b402b288c1364fe54d2f9bba","demo-11",7.66,1787898729888,120439,4682,68598,125121],["fbdc773b26a55215625d165b3207d5a3","demo-11",1.68,1787969449555,364928,1965,232075,366893],["769978194bd4a21ca1e381f9fb1b0902","demo-11",0.59,1787993048076,136629,8499,84128,145128],["cfe07a63e93e9707d903ff4df30224c5","demo-10",6.88,1788070055548,37752,864,20361,38616],["edcf975c9f395ef11b4f463f1ca505c1","demo-10",1.79,1788145793100,37256,740,35014,37996],["b73c30c80c6478014858079eee1addc8","demo-10",6.93,1788159698263,203973,4505,185544,208478],["ea16b18fc17a4f81de27a24ee134f9f8","demo-10",6.52,1788181051553,368212,1380,247706,369592],["0bf3d0a7bc9df599115d27cfb26f1928","demo-10",0.97,1788224554079,92562,998,70875,93560],["b6e244823771690c90ebc2c389b28a18","demo-10",7.82,1788247856145,389444,1088,210650,390532],["c9ff909007ee64febee33d4a9e475394","demo-10",3.95,1788269526880,269604,5012,187752,274616],["c1e299a3cabe5e52190d78d321f59868","demo-10",5.96,1788272311372,270145,1936,170868,272081],["85f35c2eead28c16c9d7dc2aaf8c3e74","demo-09",8.76,1788311863076,353376,7444,223696,360820],["bfe95413e42a872f55e4615b1f8e6521","demo-09",8.36,1788315394876,141790,935,131054,142725],["9c46199259d4697fd541da5610c5ab83","demo-09",6.9,1788320598984,398053,3922,227465,401975],["250a82a2a361bca2104c968a1886a7ba","demo-09",7.89,1788331516253,98283,7686,83734,105969],["e85666f3612390ba3d3a190299ea4514","demo-09",7.73,1788333121895,223794,5683,204716,229477],["67eee0990675295f88122e140fc05531","demo-09",2.0,1788407876638,20209,1020,11552,21229],["5dc18bce34456d5b223be9e796ceb525","demo-09",5.77,1788416778679,325969,5234,232645,331203],["7199e0b39416c610a5464f6d983fd973","demo-09",5.58,1788418822023,49428,6039,36226,55467],["a2e5c7d70c6f2fcc87dd58d9c4ad1006","demo-09",7.78,1788423023192,158590,2185,148245,160775],["14d5aea4c3bf64e954b133015c396f5e","demo-09",4.2,1788423825830,322703,2695,187019,325398],["149a3e17771ba4bae989da51bec49ab4","demo-09",6.78,1788436858076,216691,7454,152467,224145],["a13903858923b7f6fe3245fe40852477","demo-09",7.77,1788439057241,381092,2013,317093,383105],["fbeb0a98f748f931a3a517594f60e846","demo-09",7.88,1788484693439,290588,4455,266703,295043],["29465388674983142e9dde7332eddf6f","demo-09",5.87,1788502830476,215175,903,134525,216078],["0c69e424a03f2a2b4cde3e5a10530be2","demo-09",8.95,1788527493684,286640,5368,236746,292008],["a02880569db596584a7d1dbc263cc4dc","demo-09",4.12,1788572848966,37717,3931,27560,41648],["84ac8fe63313a10169c60d1b246b9480","demo-09",5.63,1788573645126,341199,3531,248436,344730],["912eda4100ab68b80decb3b505b4c425","demo-09",3.45,1788579086574,139149,1046,76234,140195],["3c71a896e79a95aa42a785002b7604fe","demo-09",7.64,1788588341125,286038,549,169119,286587],["eb7f1414f6de2fbe80915aaf4110b8bc","demo-09",4.53,1788595030374,259286,2652,198703,261938],["06c9cd95db869c8a01a23b4eb2971b77","demo-09",4.16,1788611429033,267537,8993,221007,276530],["f87f4a4d3f3f407226437a8e1f80a4e8","demo-08",6.63,1789042251945,221104,6185,199829,227289],["1e239eb452fef478d6948dedaafb4294","demo-08",3.75,1789044799904,372454,924,262609,373378],["ff01fe8010fe52d4db68f275069e87dc","demo-08",5.68,1789045030038,218108,2531,177026,220639],["f78530bfcaca003cce0843c2c0e908a8","demo-08",7.32,1789092365079,221187,8336,140614,229523],["c379023e7262b8a93c39679d771c23e1","demo-08",5.72,1789174830735,344477,8319,299190,352796],["50505652bbc55c33ec1072ee150dbf6a","demo-08",7.09,1789174927806,353676,2434,258242,356110],["21460c5a299c858dc5e6e62f75fdf37c","demo-08",0.53,1789179925739,322931,6275,241615,329206],["f12616423423880b67ac56f8ba60491e","demo-08",0.45,1789198879602,123390,6701,111758,130091],["bece71454ff6f2c50d25f954f4042f1e","demo-08",5.27,1789198979129,181268,7145,119769,188413],["a2e8fec0ed19557a9b8e9a820da9f44a","demo-08",3.74,1789264704294,273092,5453,247666,278545],["d445a53e3234752bd8aa7be39d5ee2f9","demo-08",4.47,1789270846608,136431,6927,102929,143358],["2558d6c02bf3977581247dd4bcbc58a3","demo-08",3.39,1789286750487,320345,6375,183498,326720],["5d866b346e3bbc975bcb937020e27c17","demo-08",1.19,1789291506082,76138,1399,53211,77537],["63a366aa6cfd49403fcf6d859526e3d0","demo-08",6.07,1789371713806,240238,5349,168420,245587],["cbbc6c9419f48c75687dd5121032888d","demo-07",3.8,1789523419797,279850,8221,209205,288071],["e200d218798a0d59012664f61a327537","demo-07",7.44,1789612870796,263225,906,231177,264131],["292322d35364e64d8b6bfeae8d76d7a1","demo-07",8.83,1789612915018,37754,8192,33886,45946],["406c61326564d13410970046538ae1c1","demo-07",8.94,1789615115149,323185,3384,235374,326569],["c61c96dbd8d4250d89df5e79bf7b6c6c","demo-07",6.11,1789633763783,345219,4149,191432,349368],["0b4e7f7c2430ca6d570b534d5e63af16","demo-07",2.15,1789824130783,134108,913,82437,135021],["ada65cc468b3e3aa53c69b0ad19f0be9","demo-07",3.6,1789829886258,126662,486,98727,127148],["99b9ede73087de350ce66f731e84fb36","demo-07",8.77,1789869373733,173971,4115,132641,178086],["42a55162bcf1fcb54109d8d65f7b07b8","demo-07",2.11,1789888670622,317210,4685,193924,321895],["c71c588cc6664843428bf7739a60f919","demo-07",6.12,1789889533589,113196,7658,56920,120854],["fd09e37c7f9c13216bca9b3f18af266c","demo-07",6.5,1789889957457,64083,3713,44930,67796],["167774ef6eb4fff8cdcec408d26f1d76","demo-06",0.82,1789971878130,206976,5357,147586,212333],["334e51aff848a9567ee5e85734893498","demo-06",3.08,1789976878545,284701,1404,247405,286105],["9df24d5ef429c622f52b254955c0a74d","demo-06",0.77,1789996866110,210303,4761,175791,215064],["506f68ace2328994b647e8a8e5ee4c91","demo-06",6.7,1790039501581,226213,7666,214650,233879],["1be03df0ae9c78bdf8cd9ec385b9c09a","demo-06",8.5,1790043241813,100938,2791,83251,103729],["9c2f67237eea6fe19fa40dd6f3b17af0","demo-06",2.01,1790057792074,174629,2085,104863,176714],["6ba99d01b7e49f36568a8c29b2217139","demo-06",3.52,1790061250370,278444,858,188885,279302],["14ace1cb47a164e41407ab3300bc22cb","demo-06",3.42,1790062118727,108741,2085,101127,110826],["3f3f37ea8c0856a43c19c31586ba22dd","demo-06",0.65,1790062899228,147065,8087,100785,155152],["07c0909c797b1538e5a15b79bcc0fd98","demo-06",5.83,1790068374641,189507,6267,115903,195774],["3683d4bc0dea6e4e64b9cb1cec032e6b","demo-06",0.6,1790085789799,331847,2698,254943,334545],["6b86290ba5acd341aca99fd0e2856ec6","demo-06",1.1,1790125263581,121772,8464,73371,130236],["c38b48a2b2d643a26ffb726aa2e3f93a","demo-06",1.36,1790134836022,152012,8954,80818,160966],["1b757b203bdea8c3d375eff10635afef","demo-06",4.49,1790147942478,21977,1370,20450,23347],["eb8a25fccda7907710053d2c76cc0573","demo-06",0.93,1790150545658,216905,871,127480,217776],["3b8a27ba202ab6fac844b8fd0059865a","demo-06",5.3,1790154348058,309145,947,159802,310092],["004b7fd099df209bca5d5e7d393cbcdd","demo-06",0.49,1790169169865,223466,4574,142053,228040],["4fd3e758082a2f4d77b5abcbbf0e11e0","demo-06",6.11,1790233923952,117261,8898,78609,126159],["dc7a615d53eab0313c73d5f49b750362","demo-06",3.15,1790236377583,382864,2779,253776,385643],["ed97ec7621f91a997e544d56d096bfd6","demo-06",4.67,1790239836044,151620,7344,76403,158964],["d359d07aed9bf0b6ed448d4eee241c43","demo-06",4.94,1790240422553,58345,6714,41463,65059],["d94355414fe04802f435a5736e8cd94e","demo-05",7.4,1792823065817,229587,7604,214805,237191],["a12f3a94877b55cb80de8b3eafcf0e77","demo-05",7.2,1792827399571,208819,2362,184154,211181],["ff18fe335534a034e8009d9073f6e53d","demo-05",6.93,1792846638927,280610,3904,194277,284514],["24056360ba28a6794d4ca9c767c98fb9","demo-04",3.98,1792891886637,377348,7685,252539,385033],["35c2e229862fe231beef67fb69f44612","demo-05",3.64,1792892863306,236416,6572,154188,242988],["d1e4d0a313932904757f1cba4a227f39","demo-04",4.76,1792897190049,267959,586,253911,268545],["3d37664251bcd77a1751f5798e4dc3a3","demo-05",3.57,1792908359620,111590,5902,96437,117492],["f09c0afb1ebb079465f456aad6cff718","demo-04",8.37,1792911627688,190156,5842,156091,195998],["75d8d8a4f9c9c679a661f62cbd65680c","demo-04",4.65,1792912510782,127593,4080,85761,131673],["c8ff1c385f93d180c5ef5cfb3099f271","demo-04",8.62,1792913241792,287891,5470,258503,293361],["64f54969ab3b74fe8eaca2887bb1d124","demo-05",1.43,1792917689392,145129,5228,114570,150357],["3e9b768fae4001e3880cb401a0506098","demo-04",4.61,1792920919587,46623,608,23381,47231],["4c3ac6fc4820823157fa49e56a34b371","demo-05",2.6,1792930091576,109528,8036,91174,117564],["f8f659ac44ce4ab37c5d42dc0f877ae3","demo-04",6.18,1792933713775,26537,8203,21534,34740],["7f7595b53b3bf4bf5d7cfed1b40de56d","demo-04",8.12,1792938760300,166574,2146,119727,168720],["deb67ae7ffb0dd9e63e1986964950dc2","demo-04",5.47,1792998986227,215151,1364,142498,216515],["c4653cde776200b5774510ca76f4251e","demo-04",1.42,1793000709176,290813,4978,262356,295791],["a97766fbd5ad53600d36ce2c1a09a840","demo-04",2.86,1793001252315,45306,4897,41727,50203],["bf5b411b24491df6171e1a8c94db5f8f","demo-04",4.91,1793002386300,130472,1522,121173,131994],["b70af5f2d5d5891fd329d65c0b35b1de","demo-04",8.07,1793005755606,168990,2671,132200,171661],["cdff5a1cd01a914cd5be785a9187df42","demo-04",0.54,1793016517594,294599,8563,238304,303162],["bee8062610e8ad0186a74a63a8c7d9e0","demo-04",6.74,1793019477088,300598,1806,184412,302404],["54ef125a25bda659998648e013d5316f","demo-04",2.58,1793024295579,44509,3548,37140,48057],["eef795cd0caa761214a0b00bb835e8a5","demo-04",6.7,1793024736054,310535,3633,218271,314168],["221265400ab7798807fa22f715c891ff","demo-04",5.88,1793025865044,357059,4067,332701,361126],["eea7bb6433a715682e5f950c0ce5af69","demo-03",3.08,1793081250123,104645,4590,66685,109235],["00ed6b0272218fdc44df96ff28541424","demo-03",2.66,1793084551903,260885,3336,243354,264221],["04a65651cdbde74758d50f1b4540f426","demo-03",8.95,1793086095336,282190,3214,145787,285404],["0144702bc6b789ef81365acc3f88af59","demo-03",1.18,1793092637603,283593,3592,246065,287185],["fb81392137161c16b00fd7bb4ecadea2","demo-03",2.37,1793093678729,226090,8601,133253,234691],["72723b9cef44c0d53ee4da5a7989e9d0","demo-03",1.31,1793104541783,119329,8725,103638,128054],["3b996870a1320b9d4de2f8ad4cb59aa7","demo-03",1.13,1793106146495,226558,668,210911,227226],["cc966f46c6aa7d550101b8119bca3cb7","demo-02",1.69,1793152504424,250752,3300,141349,254052],["5810d60ea72991b9e8c147437abec539","demo-02",7.28,1793169021756,347190,331,186840,347521],["44d82a531289bafae53169606ce193c2","demo-02",8.47,1793171015650,380817,3303,299130,384120],["d58dcdb46b4468068b5ab3ee4265bb31","demo-02",1.53,1793172757495,146111,5641,132889,151752],["a906922fa4b9a9c4b753a1eef0836085","demo-02",3.55,1793173858940,84146,2830,51657,86976],["dedb9109618177ffd75d6769aa4c5c60","demo-03",4.75,1793175013848,49046,1684,45952,50730],["eb4ed2e3895e8b6b263cfa5e67ec326a","demo-02",4.83,1793177659582,374404,4537,270535,378941],["fd68373b29acf1a57cbd1f5ae28af604","demo-02",6.14,1793178877819,69348,6825,41655,76173],["e0cfab4ceaefc4d2d3bf6d016bae4b5b","demo-02",4.71,1793180567589,325842,8766,240901,334608],["4ba2e1619fb9af5084768b8c54dd0ba5","demo-02",4.81,1793180751191,29480,6597,15592,36077],["84b5a81842d87208d86f40f6b239f3c7","demo-01",3.55,1793189947963,357073,1791,205377,358864],["37c60e984f3e885ee1e437b7f735efe6","demo-03",3.47,1793190032109,148160,864,74151,149024],["31dec4f4df2a8b79fc8e80b36f0e2289","demo-02",7.5,1793196363969,296080,2581,176158,298661],["213bca7fd644de2f0dec6823fb5c9d56","demo-03",0.52,1793196528865,232178,5994,181435,238172],["81f98b521905d591c5b2e75a0acd8be1","demo-02",4.29,1793236540321,120299,4837,61658,125136],["26b94c7f9118bb16000f49c81a358ca0","demo-01",5.01,1793240508391,334954,1161,310511,336115],["b156d1ad330c16a3831d03bf9b2bd6c0","demo-02",2.78,1793240898434,190715,8582,138968,199297],["8e31704187ddaeb784b28054aead44b0","demo-02",4.55,1793241315678,52377,5640,44490,58017],["742a80631f2642aadcded20443b30f66","demo-02",0.5,1793241520114,136605,1391,129424,137996],["f4998d7c4093f6dea268aa872607679d","demo-01",3.39,1793242556477,129027,6464,85657,135491],["5c9bcf35873be078f3b7a50df373ca53","demo-01",1.66,1793244807721,32108,3662,23902,35770],["49952399c4aaeac137dc76fb0f17a300","demo-01",1.51,1793245152765,81391,8388,49764,89779],["c7ac1491def88334e647cb8f74e69a5d","demo-01",8.59,1793245442456,290265,1184,234028,291449],["5b06258e7e26f36a8483f8b8332dd331","demo-01",6.69,1793256756938,230074,4014,217493,234088],["e7e8f9f60a227385459c945c43fc0527","demo-02",7.1,1793257000692,74934,1677,46586,76611],["f1d69ed617f5e837d70820fe119a72d1","demo-01",2.72,1793259488084,280400,7774,228152,288174],["e315128862c33a4fb774eb5248db40af","demo-01",6.15,1793259703395,323010,7601,164784,330611],["153e7c2a26a2c0bd3b1287fff52ddf5d","demo-01",1.92,1793262130961,377943,6533,228421,384476],["0fef792866836886a260cd0b7b45145c","demo-01",2.04,1793262349492,226632,1996,213736,228628],["fe3c9c8f2b855c1f28aaca51b98c67c2","demo-02",1.49,1793262556649,230442,1691,130895,232133],["6f15b6ad2db3997fe39639be7a605a91","demo-02",7.19,1793263856782,393027,3565,255323,396592],["e22571594720771f8ca8181166d22876","demo-01",1.58,1793264757863,107223,7659,74384,114882],["1292618550e40d54712ea6b36471fde4","demo-02",6.17,1793264905187,238437,2292,165177,240729],["b91ee9e5efe09f07cefe2a1f727d8349","demo-01",8.9,1793265403231,121525,5940,112987,127465],["1a28f7b324e4e25a15fc899e4fd58dbe","demo-01",6.85,1793266180480,271865,8227,226506,280092],["254b0c4e010c4759482c9cbc43435cc5","demo-01",4.0,1793267616483,328870,3287,219081,332157],["ed84e91ef132bf2de040015ce064a114","demo-02",2.63,1793276134568,386591,8872,290631,395463],["179a071e518ae4525b4b1b75321c5296","demo-02",6.61,1793276758887,197794,7202,100631,204996],["cfbf33609cfc865239194242a2eddbbd","demo-01",7.18,1793277258720,283558,5701,238541,289259],["27e9e06f59b44e92effddeeaa842bc19","demo-02",5.12,1793282942327,340640,8071,190398,348711],["8a6a63ec24ede6a46b4cb2424a23d596","demo-00",1.41,1793322873639,44422,2481,28377,46903],["eeeacbe226e875555790f82ec1d3fcff","demo-00",4.61,1793327553639,239216,3002,123828,242218],["b64ce4228c38fb2918f135d25f557203","demo-00",0.94,1793329593639,324925,3378,171177,328303],["57ee05cde00902c77ebff20686734721","demo-00",6.67,1793340339105,321163,5219,202195,326382],["099950d836f675cc81e74ef5e8e25d94","demo-00",1.14,1793361971083,211726,1250,145705,212976],["a09f76b5a170b33839263059f28c105d","demo-00",5.41,1793363272829,50990,2328,26914,53318],["7403e430ec66a78795e761d17731af10","demo-00",3.51,1793370894688,244181,5446,149387,249627]],"sessions":{"demo-04":{"t":"写一个爬虫脚本","m":"glm-5","c":"","u":88215,"s":128000},"demo-03":{"t":"翻译 PDF 讲义","m":"hunyuan-t2","c":"","u":116463,"s":128000},"demo-09":{"t":"清洗客户 CSV","m":"deepseek-v4.1-flash","c":"","u":39531,"s":128000},"demo-02":{"t":"重构登录模块","m":"kimi-k2.5","c":"","u":27653,"s":128000},"demo-05":{"t":"调试 Docker 部署","m":"glm-5","c":"","u":86845,"s":128000},"demo-07":{"t":"生成产品介绍页","m":"deepseek-v4.1-flash","c":"","u":72927,"s":128000},"demo-00":{"t":"整理周报并发到群里","m":"kimi-k2.5","c":"","u":118687,"s":128000},"demo-11":{"t":"画系统架构图","m":"kimi-k2.5","c":"","u":37082,"s":128000},"demo-01":{"t":"分析销售数据表","m":"deepseek-v4.1-flash","c":"","u":99449,"s":128000},"demo-10":{"t":"写单元测试","m":"kimi-k2.5","c":"","u":102034,"s":128000},"demo-08":{"t":"排查内存泄漏","m":"deepseek-v4.1-flash","c":"","u":87745,"s":128000},"demo-06":{"t":"做竞品调研","m":"glm-5","c":"","u":22584,"s":128000}}};
+
+let PALETTE = [], OTHER = "";
+function readColors(){
+  const cs = getComputedStyle(document.documentElement);
+  PALETTE = [1,2,3,4,5,6,7].map(i => cs.getPropertyValue("--c"+i).trim());
+  OTHER = cs.getPropertyValue("--other").trim();
+}
+const DAY = 864e5;
+
+const S = {range:7, group:"session", sortKey:"credit", sortDir:-1,
+           hidden:new Set(), open:new Set(), heat:"daily", allRows:false,
+           metric:"credits"};
+const applyMetric = () => RECS.forEach(r => { r.v = S.metric === "tokens" ? r.ttok : r.credit; });
+const unit = () => S.metric === "tokens" ? "Token" : "积分";
+
+const RECS = DATA.records.map(r => ({rid:r[0], sid:r[1], credit:r[2], ts:r[3], tin:r[4]||0, tout:r[5]||0, tcache:r[6]||0, ttok:r[7]||0}));
+const SESS = DATA.sessions;
+const ymd = d => { const p = n => String(n).padStart(2,"0");
+  return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate()); };
+const dayKey = ts => { const d = new Date(ts); d.setHours(0,0,0,0); return ymd(d); };
+const md = k => k.slice(5);
+const fmtAxis = x => x >= 1e6 ? Math.round(x/1e6)+"M"
+  : x >= 1000 ? Math.round(x/1000)+"k" : Math.round(x);
+const fmt = x => !x ? "0" : x >= 1e6 ? (x/1e6).toFixed(2)+"M"
+  : x >= 1000 ? (x/1000).toFixed(1)+"k" : (x >= 10 ? Math.round(x) : x.toFixed(1));
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+const cutoff = () => S.range ? new Date().setHours(0,0,0,0) - (S.range-1)*DAY : 0;
+const inRange = () => { const c = cutoff(); return RECS.filter(r => r.ts >= c); };
+
+const groupKey = r => S.group === "model" ? (SESS[r.sid]?.m || "未知") : r.sid;
+const groupLabel = k => S.group === "model" ? k : (SESS[k]?.t || "(未命名)");
+
+const tipEl = document.getElementById("tip");
+function showTip(html, x, y){
+  tipEl.innerHTML = html; tipEl.classList.add("on");
+  const r = tipEl.getBoundingClientRect();
+  let left = x + 12, top = y - r.height - 10;
+  if (left + r.width > innerWidth - 10) left = x - r.width - 12;
+  if (top < 8) top = y + 16;
+  tipEl.style.left = left + "px"; tipEl.style.top = top + "px";
+}
+const hideTip = () => tipEl.classList.remove("on");
+
+function renderStats(){
+  const recs = inRange();
+  const total = recs.reduce((a,r) => a + r.v, 0);
+  const byDay = {};
+  recs.forEach(r => byDay[dayKey(r.ts)] = (byDay[dayKey(r.ts)]||0) + r.v);
+  const peak = Object.entries(byDay).sort((a,b) => b[1]-a[1])[0] || ["—", 0];
+
+  let delta = "";
+  if (S.range){
+    const c = cutoff(), before = RECS.filter(r => r.ts >= c - S.range*DAY && r.ts < c)
+                                 .reduce((a,r) => a + r.v, 0);
+    if (before > 0){
+      const p = (total - before) / before * 100;
+      delta = `<span class="d ${p >= 0 ? "up" : "down"}">${p >= 0 ? "+" : ""}${p.toFixed(0)}%</span> 较上期`;
+    }
+  }
+  const cells = [
+    [S.metric === "tokens" ? "Token 总量" : "积分总量", fmt(total), delta || unit()],
+    ["请求", recs.length, "次模型调用"],
+    ["会话", new Set(recs.map(r => r.sid)).size, "个有用量"],
+    ["峰值日", fmt(peak[1]), md(peak[0])]
+  ];
+  document.getElementById("stats").innerHTML = cells.map(([k,v,s]) =>
+    `<div class="metric"><span class="k">${k}</span><span class="v">${v}</span>` +
+    `<span class="s">${s}</span></div>`).join("");
+}
+
+function renderStack(){
+  const recs = inRange().filter(r => r.ts);
+  const n = S.range || 30;
+  const end = new Date(); end.setHours(0,0,0,0);
+  const all = [];
+  for (let i = n-1; i >= 0; i--) all.push(ymd(new Date(end.getTime() - i*DAY)));
+
+  const totals = {};
+  recs.forEach(r => { const k = groupKey(r); totals[k] = (totals[k]||0) + r.v; });
+  const keys = Object.keys(totals).sort((a,b) => totals[b]-totals[a]);
+  const visible = keys.filter(k => !S.hidden.has(k));
+  const main = visible.slice(0, 7);
+  const overflow = new Set(visible.slice(7));
+  const colorOf = k => {
+    const i = main.indexOf(k);
+    return (overflow.has(k) || i < 0) ? OTHER : PALETTE[i % PALETTE.length];
+  };
+
+  const cell = {}, other = {};
+  recs.forEach(r => {
+    const d = dayKey(r.ts), k = groupKey(r);
+    if (S.hidden.has(k)) return;
+    if (overflow.has(k)) { other[d] = (other[d]||0) + r.v; return; }
+    (cell[d] ||= {})[k] = (cell[d][k]||0) + r.v;
+  });
+  const dayTotal = d => (Object.values(cell[d]||{}).reduce((a,b)=>a+b,0) + (other[d]||0));
+  const peak = Math.max(1, ...all.map(dayTotal));
+
+  const W = 1000, H = 220, PL = 40, PB = 22, PT = 10;
+  const plotH = H - PB - PT, slot = (W-PL)/all.length;
+  const bw = Math.max(2, Math.min(26, slot*0.5));
+  const step = Math.ceil(all.length / (all.length <= 14 ? all.length : 8));
+
+  let svg = `<svg viewBox="0 0 ${W} ${H}" class="chart" id="stackSvg">`;
+  for (let i = 0; i < 3; i++){
+    const y = PT + plotH*i/2;
+    svg += `<line x1="${PL}" y1="${y}" x2="${W-2}" y2="${y}" class="grid"/>`
+        +  `<text x="${PL-7}" y="${y+3.5}" class="axis" text-anchor="end">${fmtAxis(peak*(1-i/2))}</text>`;
+  }
+  all.forEach((d, i) => {
+    const x = PL + slot*i + (slot-bw)/2;
+    let y = PT + plotH;
+    main.forEach(k => {
+      const v = (cell[d]||{})[k] || 0; if (!v) return;
+      const h = plotH*v/peak; y -= h;
+      svg += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" `
+           + `height="${h.toFixed(1)}" fill="${colorOf(k)}" class="seg-rect"/>`;
+    });
+    if (other[d]){
+      const h = plotH*other[d]/peak; y -= h;
+      svg += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" `
+           + `height="${h.toFixed(1)}" fill="${OTHER}" class="seg-rect"/>`;
+    }
+    if (i % step === 0 || i === all.length-1)
+      svg += `<text x="${(x+bw/2).toFixed(1)}" y="${H-7}" class="axis" text-anchor="middle">${md(d)}</text>`;
+  });
+  all.forEach((d, i) => {
+    svg += `<rect class="col-hit" data-day="${d}" x="${(PL+slot*i).toFixed(1)}" y="${PT}" `
+         + `width="${slot.toFixed(1)}" height="${plotH}"/>`;
+  });
+  svg += "</svg>";
+  document.getElementById("stack").innerHTML = svg;
+
+  const total = Object.values(totals).reduce((a,b)=>a+b,0) || 1;
+  let lg = main.map(k =>
+    `<button class="lg ${S.hidden.has(k)?"off":""}" data-k="${esc(k)}">`
+    + `<span class="sw" style="background:${colorOf(k)}"></span>${esc(groupLabel(k).slice(0,14))}`
+    + `<span class="pc">${(totals[k]/total*100).toFixed(1)}%</span></button>`).join("");
+  if (overflow.size){
+    const ov = [...overflow].reduce((a,k) => a + totals[k], 0);
+    lg += `<span class="lg" style="cursor:default"><span class="sw" style="background:${OTHER}"></span>`
+        + `其他 ${overflow.size}<span class="pc">${(ov/total*100).toFixed(1)}%</span></span>`;
+  }
+  document.getElementById("legend").innerHTML = lg;
+  document.getElementById("stackTag").textContent =
+    `${all[0]} → ${all[all.length-1]} · 按${S.group === "model" ? "模型" : "会话"}`;
+
+  document.getElementById("stackSvg").querySelectorAll(".col-hit").forEach(hit => {
+    hit.addEventListener("mousemove", e => {
+      const d = hit.dataset.day, stack = cell[d] || {};
+      const rows = Object.entries(stack).sort((a,b) => b[1]-a[1]).slice(0,5);
+      if (other[d]) rows.push(["__other", other[d]]);
+      let html = `<div class="d">${d} · ${fmt(dayTotal(d))}</div>`;
+      if (!rows.length) html += `<div class="r"><span>无用量</span></div>`;
+      rows.forEach(([k,v]) => {
+        html += `<div class="r"><span><span class="sw" style="background:`
+          + `${k==="__other"?OTHER:colorOf(k)}"></span>`
+          + `${esc(k==="__other" ? "其他" : groupLabel(k).slice(0,18))}</span><b>${fmt(v)}</b></div>`;
+      });
+      showTip(html, e.clientX, e.clientY);
+    });
+    hit.addEventListener("mouseleave", hideTip);
+  });
+}
+
+function renderHours(){
+  const recs = inRange(), h = new Array(24).fill(0);
+  recs.forEach(r => h[new Date(r.ts).getHours()] += r.v);
+  const peak = Math.max(1, ...h);
+  const W = 1000, H = 120, PL = 40, PB = 20, PT = 6;
+  const plotH = H-PB-PT, slot = (W-PL)/24, bw = slot*0.45;
+  let svg = `<svg viewBox="0 0 ${W} ${H}" class="chart">`;
+  svg += `<line x1="${PL}" y1="${PT+plotH}" x2="${W-2}" y2="${PT+plotH}" class="grid"/>`;
+  h.forEach((v, i) => {
+    const x = PL + slot*i + (slot-bw)/2, bh = plotH*v/peak;
+    svg += `<rect x="${x.toFixed(1)}" y="${(PT+plotH-bh).toFixed(1)}" width="${bw.toFixed(1)}" `
+        +  `height="${Math.max(bh,0.5).toFixed(1)}" class="bar2" data-h="${i}" data-v="${v.toFixed(1)}"/>`;
+    if (i % 3 === 0)
+      svg += `<text x="${(x+bw/2).toFixed(1)}" y="${H-5}" class="axis" text-anchor="middle">`
+          +  `${String(i).padStart(2,"0")}</text>`;
+  });
+  svg += "</svg>";
+  const el = document.getElementById("hours");
+  el.innerHTML = svg;
+  el.querySelectorAll("[data-h]").forEach(b => {
+    b.addEventListener("mousemove", e => showTip(
+      `<div class="d">${String(b.dataset.h).padStart(2,"0")}:00</div>`
+      + `<div class="r"><span>${unit()}</span><b>${fmt(+b.dataset.v)}</b></div>`,
+      e.clientX, e.clientY));
+    b.addEventListener("mouseleave", hideTip);
+  });
+}
+
+function renderTable(){
+  const recs = inRange(), agg = {};
+  recs.forEach(r => {
+    const a = agg[r.sid] ||= {credit:0, tok:0, req:0, list:[]};
+    a.credit += r.v; a.tok += r.ttok; a.req++; a.list.push(r);
+  });
+  const rows = Object.entries(agg).map(([sid,a]) => {
+    const m = SESS[sid] || {}, size = m.s || 0;
+    return {sid, title:m.t || "(未命名)", model:m.m || "", cwd:m.c || "",
+            credit:a.credit, tok:a.tok, req:a.req, list:a.list,
+            pct: size ? (m.u||0)/size*100 : 0};
+  });
+  const k = S.sortKey, dir = S.sortDir;
+  rows.sort((a,b) => k === "title"
+    ? a.title.localeCompare(b.title, "zh")*dir
+    : (a[k]-b[k])*dir);
+
+  const peak = Math.max(1, ...rows.map(r => r.credit));
+  const total = rows.reduce((a,r) => a + r.credit, 0) || 1;
+  const shown = S.allRows ? rows : rows.slice(0, 15);
+
+  document.querySelectorAll("thead th.s").forEach(th => {
+    th.classList.toggle("srt", th.dataset.k === k);
+    const ar = th.querySelector(".ar");
+    if (ar) ar.textContent = th.dataset.k === k ? (dir < 0 ? "▼" : "▲") : "▲";
+  });
+
+  let html = shown.map(r => {
+    const w = r.credit/peak*100, open = S.open.has(r.sid);
+    let s = `<tr class="row ${open?"open":""}" data-sid="${r.sid}">`
+      + `<td class="ttl"><div class="cv"><span class="chev"></span><div>`
+      + `<div class="t">${esc(r.title)}</div>`
+      + `<div class="sub">${esc(r.model || r.cwd || "—")}</div></div></div></td>`
+      + `<td class="num">${fmt(r.credit)}</td>`
+      + `<td class="num mut">${r.req}</td>`
+      + `<td class="bar-cell"><div class="track"><i style="width:${w.toFixed(1)}%"></i></div>`
+      + `<span class="mut n" style="font-size:10px">${(r.credit/total*100).toFixed(1)}%</span></td>`
+      + `<td class="num ${r.pct >= 80 ? "warn" : ""}">${r.pct.toFixed(0)}%</td></tr>`;
+    if (open){
+      const list = [...r.list].sort((a,b) => a.ts-b.ts);
+      s += `<tr class="det"><td colspan="5"><div class="det-in">`
+        + `<div class="mut" style="font-size:10.5px;margin-bottom:5px">${list.length} 次请求 · `
+        + `${S.metric === "tokens" ? fmt(r.credit) + " Token" : r.credit.toFixed(2) + " 积分"}${r.cwd ? " · " + esc(r.cwd) : ""}</div>`
+        + (list.length ? list.map(x => `<div class="req">`
+            + `<span>${new Date(x.ts).toLocaleString("zh-CN",{hour12:false})} `
+            + `<i>${x.rid.slice(0,8)}</i></span><b>${x.credit.toFixed(2)}`
+            + `<span class="mut" style="font-size:9.5px">${x.ttok ? " · " + fmt(x.ttok) + " tok" : ""}</span></b></div>`).join("")
+          : `<div class="det-empty">没有请求级记录</div>`)
+        + `</div></td></tr>`;
+    }
+    return s;
+  }).join("");
+
+  if (rows.length > shown.length)
+    html += `<tr><td colspan="5" style="padding:9px 8px"><button class="lg" id="moreRows" `
+      + `style="color:var(--accent)">显示全部 ${rows.length} 个</button></td></tr>`;
+  const tb = document.getElementById("tbody");
+  tb.innerHTML = html || `<tr><td colspan="5" class="mut" style="padding:16px 8px">这个范围内没有用量</td></tr>`;
+  const mo = document.getElementById("moreRows");
+  if (mo) mo.onclick = () => { S.allRows = true; renderTable(); };
+}
+
+function renderCal(){
+  // 日积分（全量，热力窗固定 13 周，不随 7d/30d 变）
+  const byDay = {};
+  RECS.forEach(r => { if (r.ts){ const k = dayKey(r.ts); byDay[k] = (byDay[k]||0) + r.v; } });
+
+  const today = new Date(); today.setHours(0,0,0,0);
+  const weeks = 13;
+  const monday = d => new Date(d.getTime() - ((d.getDay()+6)%7)*DAY);
+  const start = new Date(monday(today).getTime() - (weeks-1)*7*DAY);
+
+  // 窗口内的每一天，最后一天截到今天
+  const keys = [];
+  for (let i = 0; i < weeks*7; i++){
+    const d = new Date(start.getTime() + i*DAY);
+    if (d > today) break;
+    keys.push(ymd(d));
+  }
+
+  // daily：当天值；cumulative：从窗口起点累加（不是从全量第一条记录起算）
+  const vals = {};
+  if (S.heat === "cum"){
+    let acc = 0;
+    keys.forEach(k => { acc += byDay[k] || 0; vals[k] = acc; });
+  } else {
+    keys.forEach(k => { vals[k] = byDay[k] || 0; });
+  }
+
+  // 分位阈值分档（GitHub 式），比线性 max 更能拉开中间档
+  const nz = Object.values(vals).filter(v => v > 0).sort((a,b) => a-b);
+  const q = p => nz[Math.min(nz.length-1, Math.floor(p*(nz.length-1)))];
+  const t = nz.length > 1 ? [q(.25), q(.5), q(.75)] : [0,0,0];
+  const lv = v => !v ? 0 : nz.length <= 1 ? 3
+    : v <= t[0] ? 1 : v <= t[1] ? 2 : v <= t[2] ? 3 : 4;
+
+  const cell = 18, gap = 5, W = weeks*(cell+gap)+22, H = 7*(cell+gap)+2;
+  let svg = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" class="cal">`;
+  ["一","","三","","五","","日"].forEach((lb, i) => {
+    if (lb) svg += `<text x="0" y="${i*(cell+gap)+cell-5}" class="axis">${lb}</text>`;
+  });
+  for (let w = 0; w < weeks; w++)
+    for (let d = 0; d < 7; d++){
+      const i = w*7 + d;
+      if (i >= keys.length) continue;
+      const key = keys[i], v = vals[key] || 0, raw = byDay[key] || 0;
+      svg += `<rect class="cell l${lv(v)}" x="${20+w*(cell+gap)}" y="${d*(cell+gap)}" `
+           + `width="${cell}" height="${cell}" rx="3" data-day="${key}" `
+           + `data-v="${v.toFixed(1)}" data-raw="${raw.toFixed(1)}"/>`;
+    }
+  svg += "</svg>";
+  const el = document.getElementById("cal");
+  el.innerHTML = svg;
+  el.querySelectorAll(".cell").forEach(c => {
+    const cum = S.heat === "cum";
+    c.addEventListener("mousemove", e => showTip(
+      `<div class="d">${c.dataset.day}</div>`
+      + `<div class="r"><span>${cum ? "累计" : "当天"}</span>`
+      + `<b>${fmt(+c.dataset.v)}</b></div>`
+      + (cum ? `<div class="r"><span>当天新增</span><b>+${fmt(+c.dataset.raw)}</b></div>` : ""),
+      e.clientX, e.clientY));
+    c.addEventListener("mouseleave", hideTip);
+  });
+  document.getElementById("activeDays").textContent =
+    keys.filter(k => (byDay[k] || 0) > 0).length;  // 按当天真实用量算，不按累计值
+}
+
+function syncUnit(){
+  const u = unit();
+  const a = document.getElementById("stackUnit"); if (a) a.textContent = u;
+  const b = document.getElementById("colUnit"); if (b) b.textContent = u;
+}
+
+const renderAll = () => {
+  readColors(); applyMetric(); syncUnit();
+  renderStats(); renderStack(); renderHours(); renderTable(); renderCal();
+};
+
+function bind(){
+  document.getElementById("range").addEventListener("click", e => {
+    const b = e.target.closest("button[data-r]"); if (!b) return;
+    S.range = +b.dataset.r;
+    [...b.parentNode.children].forEach(x => x.classList.toggle("on", x === b));
+    renderAll();
+  });
+  document.getElementById("metric").addEventListener("click", e => {
+    const b = e.target.closest("button[data-m]"); if (!b) return;
+    S.metric = b.dataset.m;
+    [...b.parentNode.children].forEach(x => x.classList.toggle("on", x === b));
+    renderAll();
+  });
+  document.getElementById("group").addEventListener("click", e => {
+    const b = e.target.closest("button[data-g]"); if (!b) return;
+    S.group = b.dataset.g; S.hidden.clear();
+    [...b.parentNode.children].forEach(x => x.classList.toggle("on", x === b));
+    renderAll();
+  });
+  document.querySelector(".sh .right.seg").addEventListener("click", e => {
+    const b = e.target.closest("button[data-h]"); if (!b) return;
+    S.heat = b.dataset.h;
+    [...b.parentNode.children].forEach(x => x.classList.toggle("on", x === b));
+    renderCal();
+  });
+  document.getElementById("legend").addEventListener("click", e => {
+    const b = e.target.closest("button.lg"); if (!b) return;
+    const k = b.dataset.k;
+    S.hidden.has(k) ? S.hidden.delete(k) : S.hidden.add(k);
+    renderStack();
+  });
+  document.querySelector("thead").addEventListener("click", e => {
+    const th = e.target.closest("th.s"); if (!th) return;
+    const k = th.dataset.k;
+    if (S.sortKey === k) S.sortDir *= -1; else { S.sortKey = k; S.sortDir = -1; }
+    renderTable();
+  });
+  document.getElementById("tbody").addEventListener("click", e => {
+    if (e.target.closest(".det")) return;
+    const tr = e.target.closest("tr.row"); if (!tr) return;
+    const sid = tr.dataset.sid;
+    S.open.has(sid) ? S.open.delete(sid) : S.open.add(sid);
+    renderTable();
+  });
+  addEventListener("scroll", hideTip);
+
+  // 主题切换：跟随 = WorkBuddy 设置，没有设置就跟系统
+  const mq = matchMedia("(prefers-color-scheme: dark)");
+  const wb = DATA.theme;
+  const pick = p => (window.__wbTheme.url === "light" || window.__wbTheme.url === "dark") ? window.__wbTheme.url
+    : (p === "light" || p === "dark") ? p
+    : (wb === "light" || wb === "dark") ? wb : (mq.matches ? "dark" : "light");
+  const tg = document.getElementById("theme");
+  const mark = () => [...tg.children].forEach(x => x.classList.toggle("on", x.dataset.t === window.__wbTheme.pref));
+  const apply = () => { document.documentElement.dataset.theme = pick(window.__wbTheme.pref); renderAll(); };
+  tg.addEventListener("click", e => {
+    const b = e.target.closest("button[data-t]"); if (!b) return;
+    window.__wbTheme.pref = b.dataset.t;
+    try { localStorage.setItem("wbu-theme", b.dataset.t); } catch (err) {}
+    mark(); apply();
+  });
+  mq.addEventListener("change", () => { if (window.__wbTheme.pref === "auto") apply(); });
+  mark();
+}
+
+document.getElementById("gen").textContent = "更新于 " + DATA.generated;
+document.getElementById("foot").innerHTML =
+  `数据：${DATA.span[0]} → ${DATA.span[1]} · ${DATA.span[2]} 个活跃日 · ${DATA.records.length} 次请求<br>`
+  + `积分来自 workbuddy.db 的 session_usage.credit_json，Token 来自 projects/*.jsonl 的 message.usage；WorkBuddy 没有 5 小时 / 每周滚动额度`;
+bind();
+renderAll();
+</script>
+</body>
+</html>
