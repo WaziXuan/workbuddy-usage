@@ -61,6 +61,12 @@ Colors come from WorkBuddy 5.9's design tokens (its "IDE Light" and "IDE Night" 
 
 `--theme light|dark|system` overrides step 3.
 
+### Font
+
+Latin text and numbers use [Schibsted Grotesk](https://github.com/schibsted/schibsted-grotesk) (SIL OFL 1.1, embedded in the page, so it works offline). Chinese falls back to PingFang / Microsoft YaHei.
+
+If the Claude desktop app is installed on the same machine, `--font auto` (the default) uses the app's own UI font for your local `dashboard.html` instead, read straight from the app's install folder at build time. That font is never copied into this repo, and the page uploaded with `--publish` always uses Schibsted Grotesk. Use `--font open` to always use Schibsted Grotesk, or `--font system` for system fonts only.
+
 ### Put it in the WorkBuddy Library (资料库)
 
 `--publish` uploads the dashboard as a page in your personal Library space, so it sits in WorkBuddy's sidebar. The first run creates the page; later runs overwrite **the same page** (its id is kept in `<out>/library.json`), so you never get duplicates.
@@ -104,4 +110,4 @@ All reads are read-only. Your usage data stays on your machine unless you use `-
 
 ## License
 
-MIT
+MIT. The bundled font in `fonts/` is under the SIL Open Font License 1.1 (`fonts/OFL.txt`).

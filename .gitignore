@@ -3,3 +3,4 @@ dashboard.html
 library.json
 *.log
 __pycache__/
+library.html

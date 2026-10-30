@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>WorkBuddy 用量</title>
 <style>
+/*__FONT_FACE__*/
 /* 颜色取自 WorkBuddy 5.9 的设计 token（IDE Light / IDE Night），跟随应用主题 */
 :root{
   --bg:#ffffff; --card:#ffffff; --card2:#f7f7f7; --hover:#0000000a;
@@ -17,7 +18,7 @@
   --bar:#00c29a; --other:#d9d9d9;
   --c1:#00c29a; --c2:#3370ff; --c3:#7c5cfc; --c4:#ff9540; --c5:#06b6d4; --c6:#ec7474; --c7:#47cf84;
   --h0:#f2f2f2; --h1:#bff0e6; --h2:#80e1cd; --h3:#40d1b3; --h4:#009273;
-  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",
+  --sans:"UI Sans",-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",
          "Hiragino Sans GB",sans-serif;
   --mono:ui-monospace,"SF Mono","Cascadia Mono",Consolas,monospace;
   color-scheme:light;
@@ -96,7 +97,7 @@ section{margin-top:22px}
 .lg:hover{color:var(--fg)}
 .lg.off{opacity:.35}
 .lg .sw{width:8px;height:8px;border-radius:2px;flex:none}
-.lg .pc{color:var(--dim);font-variant-numeric:tabular-nums}
+.lg .pc{color:var(--dim)}
 
 table{width:100%;border-collapse:collapse;font-size:13px}
 th{text-align:left;font-weight:400;color:var(--dim);font-size:12px;padding:8px;

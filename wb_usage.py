@@ -275,7 +275,72 @@ def demo_data(seed=7):
     return records, ctx, sessions
 
 
-def render(records, ctx, sessions, out_dir, theme="system"):
+OPEN_FONT = os.path.join(HERE, "fonts", "SchibstedGrotesk-latin-wght.woff2")
+CLAUDE_ASARS = [
+    r"C:/Program Files/WindowsApps/Claude_*/app/resources/app.asar",
+    os.path.join(HOME, "AppData", "Local", "AnthropicClaude", "app-*", "resources", "app.asar"),
+    "/Applications/Claude.app/Contents/Resources/app.asar",
+]
+
+
+def claude_font():
+    """从本机 Claude 桌面版安装包里读出 Anthropic Sans（只在本机用，不随仓库分发）。没装就返回 None。"""
+    import struct
+    paths = [p for pat in CLAUDE_ASARS for p in glob.glob(pat)]
+    if os.name == "nt" and not paths:
+        # 商店版装在 WindowsApps，目录不让列，只能问系统要安装位置
+        import subprocess
+        try:
+            loc = subprocess.run(
+                ["powershell", "-NoProfile", "-Command",
+                 "(Get-AppxPackage -Name Claude | Select-Object -First 1).InstallLocation"],
+                capture_output=True, text=True, timeout=20).stdout.strip()
+        except (OSError, subprocess.SubprocessError):
+            loc = ""
+        asar = os.path.join(loc, "app", "resources", "app.asar") if loc else ""
+        if asar and os.path.isfile(asar):
+            paths = [asar]
+    for asar in sorted(paths, key=os.path.getmtime, reverse=True):
+        try:
+            with open(asar, "rb") as fh:
+                head = fh.read(16)
+                size = struct.unpack("<I", head[12:16])[0]
+                base = 8 + struct.unpack("<I", head[4:8])[0]
+                tree = json.loads(fh.read(size))
+                stack = [tree]
+                while stack:
+                    node = stack.pop()
+                    for name, v in node.get("files", {}).items():
+                        if "files" in v:
+                            stack.append(v)
+                        elif name.startswith("AnthropicSans-Roman") and name.endswith(".woff2") \
+                                and not v.get("unpacked"):
+                            fh.seek(base + int(v["offset"]))
+                            return fh.read(v["size"])
+        except (OSError, ValueError, KeyError, struct.error):
+            continue
+    return None
+
+
+def font_face(font="auto"):
+    """返回嵌进页面的 @font-face。auto：本机有 Claude 就用 Anthropic Sans，否则用开源的 Schibsted Grotesk。
+    中文两种字体都不含，照样落到苹方 / 微软雅黑。"""
+    import base64
+    data = claude_font() if font in ("auto", "claude") else None
+    if data is None and font == "claude":
+        print("没找到 Claude 桌面版的字体，改用 Schibsted Grotesk。")
+    if data is None and font != "system" and os.path.isfile(OPEN_FONT):
+        with open(OPEN_FONT, "rb") as fh:
+            data = fh.read()
+    if data is None:
+        return ""
+    return ('@font-face{font-family:"UI Sans";font-weight:100 900;font-display:swap;'
+            'src:url(data:font/woff2;base64,%s) format("woff2")}'
+            % base64.b64encode(data).decode())
+
+
+def render(records, ctx, sessions, out_dir, theme="system", font="auto",
+           name="dashboard.html"):
     days = sorted({
         datetime.fromtimestamp(r["ts"] / 1000).strftime("%Y-%m-%d")
         for r in records.values() if r["ts"]
@@ -307,8 +372,9 @@ def render(records, ctx, sessions, out_dir, theme="system"):
     html = html.replace("__DATA__", json.dumps(payload, ensure_ascii=False,
                                                separators=(",", ":")))
     html = html.replace("__WB_THEME__", theme)
+    html = html.replace("/*__FONT_FACE__*/", font_face(font))
 
-    path = os.path.join(out_dir, "dashboard.html")
+    path = os.path.join(out_dir, name)
     with open(path, "w", encoding="utf-8") as fh:
         fh.write(html)
     return path
@@ -370,6 +436,9 @@ def main():
                     help="页面默认主题；不给就读 WorkBuddy 的外观设置")
     ap.add_argument("--demo", action="store_true",
                     help="用假数据生成（不读本机、不写历史），截图或试看用")
+    ap.add_argument("--font", choices=["auto", "claude", "open", "system"], default="auto",
+                    help="auto：本机有 Claude 桌面版就用它的 Anthropic Sans，否则开源的 Schibsted Grotesk；"
+                         "open：总用 Schibsted Grotesk；system：只用系统字体。传进资料库的页面总用开源字体")
     args = ap.parse_args()
 
     if args.log:
@@ -388,7 +457,7 @@ def main():
             sys.exit("没有找到任何用量记录。")
         merged = merge_history(records, args.out)
     s = summarize(merged)
-    path = render(merged, ctx, sessions, args.out, theme)
+    path = render(merged, ctx, sessions, args.out, theme, args.font)
 
     print("总积分 %.2f · %d 请求 · %d 会话 · %d 天（%s → %s）" %
           (s["total"], s["requests"], s["sessions"], s["days"], s["first"], s["last"]))
@@ -396,7 +465,10 @@ def main():
           ("{:,}".format(s["tok"]), s["tok_hit"], s["requests"]))
     print(path)
     if args.publish:
-        publish(path, args.out)
+        # 上传的那份不带 Anthropic Sans（专有字体不出本机），用开源字体单独生成
+        up = render(merged, ctx, sessions, args.out, theme,
+                    "system" if args.font == "system" else "open", "library.html")
+        publish(up, args.out)
     if args.open:
         webbrowser.open("file:///" + os.path.abspath(path).replace("\\", "/"))
 

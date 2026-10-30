@@ -18,6 +18,7 @@ python ~/.workbuddy/skills/wb-usage/wb_usage.py --open
 - 定时/无窗口运行：加 `--log <文件>`，输出追加写进日志（配 `pythonw.exe` 用）
 - 主题：配色取自 WorkBuddy 的设计 token，默认跟 WorkBuddy 外观设置（浅色/深色/跟随系统），页面右上角也能切；`--theme light|dark|system` 强制指定
 - 试看：`--demo` 用假数据生成，不读本机、不写历史
+- 字体：英文和数字默认用内置的开源字体 Schibsted Grotesk；本机装了 Claude 桌面版时，本地看板改用它的界面字体（建页面时从安装包里读，不进仓库）。传进资料库的那份总用开源字体。`--font open|system` 可强制
 
 ## 能点什么
 
