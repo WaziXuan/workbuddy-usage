@@ -26,7 +26,7 @@ One self-contained HTML file (hand-written SVG + vanilla JS, no CDN, works offli
 As a WorkBuddy skill, so you can type `/wb-usage` inside WorkBuddy:
 
 ```bash
-git clone https://github.com/<you>/workbuddy-usage ~/.workbuddy/skills/wb-usage
+git clone https://github.com/WaziXuan/workbuddy-usage ~/.workbuddy/skills/wb-usage
 ```
 
 Restart WorkBuddy once and the `/wb-usage` command appears. Or just run the script directly from anywhere.
